@@ -26,4 +26,4 @@ if __name__ == '__main__':
         #imgRGB = cv2.imread(os.path.join(folder_rgb, rgb_img), 0)
 
         out = fillPoints(imgDepth)
-        np.save(f'Holes_filled/{rgb_img}', out)
+        np.save(f'Holes_filled/{imgDepth}', out)
