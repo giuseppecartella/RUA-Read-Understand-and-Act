@@ -1,12 +1,10 @@
 import numpy as np
 import cv2
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import os
 import statistics
 import random as rng
 import math
-
-from numpy.core.numeric import zeros_like
 
 
 def compute_sift_imgs(img1 , img2):
@@ -128,14 +126,6 @@ def find_box_max_area(src_gray , threshold=50):
     width = boundRect[max][2]
     height = boundRect[max][3]
 
-def primo_metodo(img, x_centre, y_centre):
-    signal_bbox_img = find_bbox_given_centre(img, x_centre, y_centre)
-        
-    cv2.imshow('part of the img with signal', signal_bbox_img) 
-    cv2.waitKey(0)
-
-    find_box_max_area(signal_bbox_img)
-
 def sift_ratio(matches):
     good = []
     good_m = []
@@ -165,20 +155,18 @@ def find_contour_max_area(contours):
     return max_hex_cnt
 
 if __name__ == '__main__':
-
-    # TemplateImage
-    img1 = cv2.imread('find_stop/stop.jpg',0)          
-    
+    template = cv2.imread('find_stop/template.jpg',0)
+   
     # loading folders with images
-    folder_rgb = 'find_stop/rgb'
+    folder_rgb = 'find_stop/not'
     folder_depth = 'find_stop/depth'
 
-    for rgb_img, depth_img in zip(os.listdir(folder_rgb),os.listdir(folder_depth) ):
+    for rgb_img, depth_img in zip(os.listdir(folder_rgb),os.listdir(folder_depth)):
         
-        img2 = cv2.imread(os.path.join(folder_rgb,rgb_img), 0)
-
+        img = cv2.imread(os.path.join(folder_rgb,rgb_img), 0)
+ 
         # Computing sift and keypoints
-        kp1, kp2, des1, des2 = compute_sift_imgs(img1 , img2)        
+        kp1, kp2, des1, des2 = compute_sift_imgs(template, img)        
 
         # BFMatcher with default params
         bf = cv2.BFMatcher()
@@ -187,7 +175,6 @@ if __name__ == '__main__':
         # Apply ratio test
         good , good_m = sift_ratio(matches)
         
-
         if len(good) > 10: # threshold number of keypoint found      
 
             coords = [kp2[good_m[i].trainIdx].pt for i in range(len(good))]
@@ -195,22 +182,20 @@ if __name__ == '__main__':
             x_centre , y_centre = find_centre_coords(coords)
         
             # draw lines for matching
-            img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,good,None,flags=2)
+            img3 = cv2.drawMatchesKnn(template,kp1,img,kp2,good,None,flags=2)
 
             cv2.imshow('Matches found',img3)
             cv2.waitKey(0)
 
-            #   primo metodo per trovare bbox --> NON BENISSIMO
-            #primo_metodo(img2, x_centre, y_centre)
-            
-
-            # ****************************secondo metodo per trovare segnale
+            # ****************************metodo per trovare segnale
             
             # taking only a bbox around the centre both in a black img and in the real img
-            signal_bbox_img, masked_img, h_x , h_y = find_bbox_given_centre(img2, x_centre, y_centre) 
+            signal_bbox_img, masked_img, h_x , h_y = find_bbox_given_centre(img, x_centre, y_centre) 
             
             # apllying canny in order to find countours
-            edged = cv2.Canny(signal_bbox_img, 100,200)                      
+            edged = cv2.Canny(signal_bbox_img, 100,200)   
+            plt.imshow(edged, cmap='gray')
+            plt.show()                  
 
             (contours,_) = cv2.findContours(edged,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE) 
 
@@ -230,9 +215,9 @@ if __name__ == '__main__':
             cv2.imshow('Final Result',masked_img)
             cv2.waitKey(0)       
             
-
             # ***********************depth part       
             # remember: depth_img and img have the same shape (480,640) 
+            #applicare hole filling + median filter (see Bigazzi and Landi 's paper)
             
             depth_array = np.load(os.path.join(folder_depth,depth_img))
 
