@@ -1,4 +1,3 @@
-from typing import final
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -66,6 +65,7 @@ def main():
         found_sign += 1
         print(f'Found {found_sign} signs!')
         coords = [kp2[good_m[i].trainIdx].pt for i in range(len(good))]
+        
         x_c, y_c = find_centre_coords(coords)
         #plt.imshow(img)
         #plt.scatter([x_c],[y_c], c='blue', marker='+', s=100)
@@ -96,8 +96,8 @@ def main():
         mask = np.where(depth==0, 255, 0).astype('uint8')
         plot_img(mask)
 
-        dst = cv2.inpaint(depth, mask, 3, cv2.INPAINT_TELEA)
-        plot_img(dst)
+        depth = cv2.inpaint(depth, mask, 3, cv2.INPAINT_TELEA)
+        plot_img(depth)
 
         depth = depth[y_c-HALF_WINDOW_SIZE:y_c+HALF_WINDOW_SIZE, x_c-HALF_WINDOW_SIZE:x_c+HALF_WINDOW_SIZE]
         plot_img(depth)
@@ -109,10 +109,8 @@ def main():
         removed_border = median[1:-1, 1:-1]
         final_depth = cv2.copyMakeBorder(removed_border, 1, 1, 1, 1, cv2.BORDER_REFLECT)
         
-
         depth_value = np.median(final_depth)
         print(depth_value)
             
-
 if __name__ == '__main__':
     main()
