@@ -1,3 +1,4 @@
+from typing import final
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -63,6 +64,7 @@ def main():
             continue #analyze next img
         
         found_sign += 1
+        print(f'Found {found_sign} signs!')
         coords = [kp2[good_m[i].trainIdx].pt for i in range(len(good))]
         x_c, y_c = find_centre_coords(coords)
         #plt.imshow(img)
@@ -106,13 +108,11 @@ def main():
         
         removed_border = median[1:-1, 1:-1]
         final_depth = cv2.copyMakeBorder(removed_border, 1, 1, 1, 1, cv2.BORDER_REFLECT)
-        plot_img(final_depth)
         
-        #now first of all we should detect outliers which values are far from the mean
-        #then manage possible holes and as last step compute mean distance from the stop sign.
-        ...
-    
-    print(f'Found {found_sign} signs!')
+
+        depth_value = np.median(final_depth)
+        print(depth_value)
+            
 
 if __name__ == '__main__':
     main()
