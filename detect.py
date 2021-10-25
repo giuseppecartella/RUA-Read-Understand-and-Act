@@ -58,7 +58,7 @@ def main():
         # Apply ratio test
         good , good_m = sift_ratio(matches)
         
-        if len(good) <= 10:
+        if len(good) < 10:
             print('Stop signal not found!')
             continue #analyze next img
         
@@ -87,21 +87,27 @@ def main():
 
         x_c, y_c = round(x_c), round(y_c)
         depth = np.load(os.path.join('find_stop', 'depth', depth_img)).astype('float32')
-        plt.imshow(depth, cmap='gray')
-        plt.show()
+        plot_img(depth)
 
-        #TRY HERE INPAINTING
+        #INPAINTING
         #define masks. Points where depth is = 0.
         mask = np.where(depth==0, 255, 0).astype('uint8')
-        plt.imshow(mask, cmap='gray')
-        plt.show()
-
+        plot_img(mask)
 
         dst = cv2.inpaint(depth, mask, 3, cv2.INPAINT_TELEA)
-        plt.imshow(dst, cmap='gray')
-        plt.show()
+        plot_img(dst)
 
         depth = depth[y_c-HALF_WINDOW_SIZE:y_c+HALF_WINDOW_SIZE, x_c-HALF_WINDOW_SIZE:x_c+HALF_WINDOW_SIZE]
+        plot_img(depth)
+        
+        # application median filter and removing borders
+        median = cv2.medianBlur(depth, 3)
+        plot_img(median)
+        
+        removed_border = median[1:-1, 1:-1]
+        final_depth = cv2.copyMakeBorder(removed_border, 1, 1, 1, 1, cv2.BORDER_REFLECT)
+        plot_img(final_depth)
+        
         #now first of all we should detect outliers which values are far from the mean
         #then manage possible holes and as last step compute mean distance from the stop sign.
         ...
