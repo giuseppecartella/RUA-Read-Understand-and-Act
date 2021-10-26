@@ -5,19 +5,21 @@ from pyrobot import Robot
 import numpy as np
 
 def check_presence_signal_around(bot_moves, helper_detection, stop_image):
-    for _ in range(3):
+    
+    for _ in range(6):
         print('Acquisition of the frame RGBD...')
         rgb_img, d_img = bot_moves.read_frame()
 
         found, _, _ = helper_detection.look_for_signal(rgb_img, stop_image)
         if found == True:
             return True
-        bot_moves.left()
+        bot_moves.left_turn()
 
     return False
 
 def go_until_stop(bot_moves, helper_detection, stop_image):
-    while True:
+    
+    while True: # togliere se è troppo lento a fare i SIFT
         #check
         print('Acquisition of the frame RGBD...')
         rgb_img, d_img = bot_moves.read_frame()
@@ -30,7 +32,7 @@ def go_until_stop(bot_moves, helper_detection, stop_image):
             #point_3D, _ = bot.camera.pix_to_3dpt(x_c, y_c)
 
             if depth >= 2.5:
-                bot_moves.forward(0.1)  #We continually moving with step = 10cm
+                bot_moves.forward(0.2)  #We continually moving with step = 10cm
             else:
                 return True
         else:
@@ -42,7 +44,7 @@ if __name__ == '__main__':
 
     bot_moves = Robot_Movements_Helper(bot)
     helper_detection = Detection_Helper()
-    stop_image = np.load(os.path.join('utils', 'utils/template.jpg')).astype('float32')
+    stop_image = np.load(os.path.join('utils', 'template.jpg')).astype('float32')
 
     found = check_presence_signal_around(bot_moves, helper_detection, stop_image)
 

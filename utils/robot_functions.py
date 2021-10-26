@@ -25,7 +25,7 @@ class Robot_Movements_Helper():
     def right_turn(self):
         self.perform_action(self.robot, 2)
     
-    #??? A cosa serve? <-----
+    # to reset robot at the starting position 
     def reset_angle(self):
         for _ in range(3):
             self.left_turn(self.robot)
