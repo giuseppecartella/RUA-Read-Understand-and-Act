@@ -4,13 +4,14 @@ import os
 
 class Detection_Helper():
 
-    def compute_sift_imgs(img1, img2):
-        sift = cv2.SIFT_create()
+    def compute_sift_imgs(self, img1, img2):
+        
+        sift = cv2.xfeatures2d.SIFT_create()
         kp1, des1 = sift.detectAndCompute(img1, None)
         kp2, des2 = sift.detectAndCompute(img2, None)
         return kp1, kp2, des1, des2
 
-    def sift_ratio(matches):
+    def sift_ratio(self, matches):
         good = []
         good_m = []
 
@@ -20,7 +21,7 @@ class Detection_Helper():
                 good_m.append(m)
         return good, good_m
 
-    def find_centre_coords(coords):
+    def find_centre_coords(self, coords):
         x = []
         y = []
         for c in coords:
@@ -33,6 +34,8 @@ class Detection_Helper():
         return x_median, y_median
 
     def look_for_signal(self, rgb_image, template):
+
+        print("Computing SIFT on the image.. ")
         kp1, kp2, des1, des2 = self.compute_sift_imgs(template, rgb_image)
         # BFMatcher with default params
         bf = cv2.BFMatcher()
@@ -49,7 +52,7 @@ class Detection_Helper():
             x_c, y_c = self.find_centre_coords(coords)
             return True, x_c, y_c
 
-    def compute_depth_distance(x_c, y_c, depth):
+    def compute_depth_distance(self, x_c, y_c, depth):
         WINDOW_SIZE = 16
         HALF_WINDOW_SIZE = int(WINDOW_SIZE / 2)
 

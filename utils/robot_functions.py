@@ -1,7 +1,7 @@
 import numpy as np
 
 class Robot_Movements_Helper():
-    def __init__(self, robot) -> None:
+    def __init__(self, robot):
         self.robot = robot
 
     def read_frame(self):
@@ -17,15 +17,15 @@ class Robot_Movements_Helper():
         self.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
 
     def forward(self, meters):
-        self.perform_action(self.robot, 0, meters)
+        self.perform_action(0, meters)
 
     def left_turn(self):
-        self.perform_action(self.robot, 1)
+        self.perform_action(1)
 
     def right_turn(self):
-        self.perform_action(self.robot, 2)
+        self.perform_action(2)
     
     # to reset robot at the starting position 
     def reset_angle(self):
         for _ in range(3):
-            self.left_turn(self.robot)
+            self.left_turn()
