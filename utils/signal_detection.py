@@ -45,7 +45,6 @@ class Detection_Helper():
         good, good_m = self.sift_ratio(matches)
 
         if len(good) < 10:
-            # print('Stop signal not found!')
             return False, None, None
         else:
             coords = [kp2[good_m[i].trainIdx].pt for i in range(len(good))]

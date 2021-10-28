@@ -27,18 +27,17 @@ def go_until_stop(bot, bot_moves, helper_detection, stop_image):
         rgb_img, d_img = bot_moves.read_frame()
 
         found, x_c, y_c = helper_detection.look_for_signal(rgb_img, stop_image)
-        if found == True:
+        if found:
             depth = helper_detection.compute_depth_distance(x_c, y_c)
 
             # Computing 3D point, passing rows and cols
-            # --> da cambiare 1000.0 in 1.0????
             cam_class = bot.camera # si chiamava cosi????
             trans, rot, T = cam_class.get_link_transform(cam_class.cam_cf, cam_class.base_f)
             base2cam_trans = np.array(trans).reshape(-1, 1)
             base2cam_rot = np.array(rot)
             
             # pix_to_3dpt(dept img, rows, cols)
-            pts_in_cam = prutil.pix_to_3dpt(d_img, [y_c], [x_c], bot.camera.get_intrinsics(), 1000.0)
+            pts_in_cam = prutil.pix_to_3dpt(d_img, [y_c], [x_c], bot.camera.get_intrinsics(), 1.0) 
             
             pts = pts_in_cam[:3, :].T
 
@@ -67,24 +66,24 @@ if __name__ == '__main__':
 
     bot_moves = Robot_Movements_Helper(bot)
     helper_detection = Detection_Helper()
-    stop_image = cv2.imread("utils/template.jpg")
+    template = cv2.imread("utils/template.jpg")
 
     #found = check_presence_signal_around(bot_moves, helper_detection, stop_image)
     for i in range(6):
         print('{} Acquisition of the frame RGBD...'.format(i))
         rgb_img, d_img = bot_moves.read_frame()
 
-        found, _, _ = helper_detection.look_for_signal(rgb_img, stop_image)
+        found, _, _ = helper_detection.look_for_signal(rgb_img, template)
         if not found:
             bot_moves.left_turn()
 
 
-    if found == True:
+    if found:
         
-        print('Signal FOUND!')
-        arrived = go_until_stop(bot, bot_moves, helper_detection, stop_image)
+        print('Signal found!')
+        is_arrived = go_until_stop(bot, bot_moves, helper_detection, template)
         
-        if arrived == True:
+        if is_arrived:
             print('Robot arrived to destination...In front of the signal!')
         else:
             print('Something went wrong! Robot no longer sees the signal!')
