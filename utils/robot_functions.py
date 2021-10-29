@@ -7,23 +7,24 @@ class Robot_Movements_Helper():
     def read_frame(self):
         return self.robot.camera.get_rgb_depth()
 
-    def perform_action(self, action_idx, meters=0.25):
+    def perform_action(self, action_idx, meters, angle_radiant):
         if action_idx == 0:
             target_position = [meters, 0.0, 0.0]
         if action_idx == 1:
-            target_position = [0.0, 0.0, np.pi / 3]
+            target_position = [0.0, 0.0, angle_radiant]
         if action_idx == 2:
-            target_position = [0.0, 0.0, -np.pi / 3]
-        self.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
+            target_position = [0.0, 0.0, -angle_radiant]
+        #self.robot.base.go_to_relative(target_position, smooth=True, close_loop=True)
+        print('oook sto facendo azioneee!')
 
-    def forward(self, meters):
-        self.perform_action(0, meters)
+    def forward(self, meters=0.25):
+        self.perform_action(0, meters, None)
 
-    def left_turn(self):
-        self.perform_action(1)
+    def left_turn(self, angle_radiant=np.pi/3):
+        self.perform_action(1, None, angle_radiant)
 
-    def right_turn(self):
-        self.perform_action(2)
+    def right_turn(self, angle_radiant=np.pi/3):
+        self.perform_action(2, None, angle_radiant)
     
     # to reset robot at the starting position 
     def reset_angle(self):
