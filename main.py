@@ -8,20 +8,6 @@ import numpy as np
 from utils.robot_functions import Robot_Movements_Helper
 from utils.signal_detection import Detection_Helper
 
-def check_presence_signal_around(bot_moves, helper_detection, stop_image):
-    
-    for _ in range(6):
-        print('Acquisition of the frame RGBD...')
-        rgb_img, d_img = bot_moves.read_frame()
-
-        found, _, _ = helper_detection.look_for_signal(rgb_img, stop_image)
-        if found == True:
-            return True
-        bot_moves.left_turn()
-
-    return False
-
-
 def compute_3d_point(bot, poi):
     """
         Input:
@@ -40,6 +26,36 @@ def compute_3d_point(bot, poi):
 
     return pts
 
+def reach_signal2(bot, bot_moves, helper_detection, first_rgb_img):
+
+    found, x_c, y_c = helper_detection.look_for_signal(first_rgb_img)
+    
+    is_arrived = False
+    while is_arrived:
+        if found:
+            depth = helper_detection.compute_depth_distance(x_c, y_c)
+
+            pts = compute_3d_point(bot, [x_c, y_c])
+            print("3D point as [x, y, z]: " , pts)
+            # rotate robot towards the target
+            theta = np.arctan2(y_c, x_c)            
+            bot_moves.turn(theta)
+
+            if depth >= 2.0:
+                bot_moves.forward(1.0)
+                rgb_img = bot_moves.read_frame()
+                found, x_c, y_c = helper_detection.look_for_signal(rgb_img)
+                continue
+            else: # sono sufficientemente vicino
+                # oppure si puo muovere di [depth, y, 0] cosi si muove in diagonale --> nel caso, fare funzione.
+                bot_moves.forward(depth)
+                is_arrived = True
+                
+        else:
+            is_arrived = False # POI DOVREMMO FARLO GIRARE SE NON LO VEDE PIU????
+            break
+
+    return is_arrived
 
 def reach_signal(bot, bot_moves, helper_detection):
  
