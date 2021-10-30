@@ -9,9 +9,8 @@ class Detection_Helper():
         self.template = reference_template
 
     def compute_sift_imgs(self, img1, img2):
-        
-        #TODO: da mettere cv2.xfeatures2d.SIFT_create()
-        sift = cv2.SIFT_create()
+
+        sift = cv2.xfeatures2d.SIFT_create()
         kp1, des1 = sift.detectAndCompute(img1, None)
         kp2, des2 = sift.detectAndCompute(img2, None)
         return kp1, kp2, des1, des2
