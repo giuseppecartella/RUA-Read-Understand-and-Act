@@ -18,11 +18,13 @@ class Robot_Movements_Helper():
         # routa di qualsiasi angolo, tanto angolo con arcant2 avrà segno
         if action_idx == 3:
             target_position = [0.0, 0.0, angle_radiant]
-        #self.robot.base.go_to_relative(target_position, smooth=True, close_loop=True)
-        print('oook sto facendo azioneee!')
-
+        self.robot.base.go_to_relative(target_position, smooth=True, close_loop=True)
+ 
     def forward(self, meters=0.25):
         self.perform_action(0, meters, None)
+    
+    def reach_relative_point(self, target_position):
+        self.robot.base.go_to_relative(target_position, smooth=True, close_loop=True)
 
     def left_turn(self, angle_radiant=np.pi/3):
         self.perform_action(1, None, angle_radiant)
