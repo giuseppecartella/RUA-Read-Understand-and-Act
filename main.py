@@ -8,7 +8,7 @@ import numpy as np
 from utils.robot_movements import Robot_Movements_Helper
 from utils.signal_detection import Detection_Helper
 
-def compute_3d_point(bot, poi):
+def compute_3d_point(bot,poi, d_img):
     """
         Input:
             -poi : Stands for "point of interest". It is a list [x_c, y_c]
@@ -26,40 +26,51 @@ def compute_3d_point(bot, poi):
 
 
 def reach_signal(bot_moves, helper_detection, poi, rgb_img, d_img):
-    x_c, y_c = poi[0], poi[1]
+    x_c, y_c = int(round(poi[0])), int(round(poi[1]))
+
     depth = helper_detection.compute_depth_distance(x_c, y_c, d_img)
 
     THRESHOLD_DISTANCE = 2.0
-    DISTANCE_LIMIT = 0.2
+    DISTANCE_LIMIT = 0.3
     INTERMEDIATE_STEP = 1.0
 
-
+    print('Computed depth: {}'.format(depth))
+    new_x, new_y = x_c, y_c
     while depth > THRESHOLD_DISTANCE:
-        pts = compute_3d_point(bot_moves.robot, [x_c, y_c])
+        pts = compute_3d_point(bot_moves.robot, [new_x, new_y], d_img)
         print("3D point as [x, y, z]: " , pts)
-        thetha = np.arctan2(y_c, x_c)
-        target_position = [INTERMEDIATE_STEP, 0.0, 0.0]
+        #thetha = np.arctan2(y_c, x_c)
+        target_position = [INTERMEDIATE_STEP, pts[0][1], 0.0]
+        #print('Thetha: {}', thetha)
         
-        bot_moves.turn(thetha)
-        bot_moves.reach_relative_point(target_position)
-
+        #bot_moves.turn(thetha)
+        #bot_moves.reach_relative_point(target_position)
+        bot_moves.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
         print('Acquisition of the frame RGBD after intermediate step...')
         rgb_img, d_img = bot_moves.read_frame()
 
-        found, x_c, y_c = helper_detection.look_for_signal(rgb_img)
+        found, new_x, new_y = helper_detection.look_for_signal(rgb_img)
+        new_x = int(round(new_x))
+        new_y = int(round(new_y))
         if not found:
             return False
-        depth = helper_detection.compute_depth_distance(x_c, y_c, d_img)
+        depth = helper_detection.compute_depth_distance(new_x, new_y, d_img)
+        print('New depth: {}'.format(depth))
+        print(new_x, new_y, depth)
     
-
-    pts = compute_3d_point(bot_moves.robot, [x_c, y_c])
+    print(new_x, new_y, depth)
+    pts = compute_3d_point(bot_moves.robot, [new_x, new_y], d_img)
     print("3D point as [x, y, z]: " , pts)
-    thetha = np.arctan2(y_c, x_c)
-    distance = np.sqrt(x_c**2 + y_c**2) # compute distance on diagonal
-    target_position = [distance - DISTANCE_LIMIT, 0.0, 0.0] #stop at limit
-    
-    bot_moves.turn(thetha)
-    bot_moves.reach_relative_point(target_position)
+    #thetha = np.arctan2(y_c, x_c)
+    #print('Thetha {}'.format(thetha))
+    #distance = np.sqrt(x_c**2 + y_c**2) # compute distance on diagonal
+    #print('Distance: {}'.format(distance))
+    target_position = [pts[0][0] - DISTANCE_LIMIT, pts[0][1], 0.0] #stop at limit
+    print('Target position: {}'.format(target_position))
+    #bot_moves.turn(thetha)
+    #bot_moves.reach_relative_point(target_position)
+    print('Type is: {}'.format(type(bot_moves.robot)))
+    bot_moves.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
     return True
             
 
@@ -72,8 +83,8 @@ if __name__ == '__main__':
     helper_detection = Detection_Helper(template)
     
     #Keep moving until signal is not found. Each time performs
-    ANGLES_RADIANT = np.pi/3
-    MAX_ROTATIONS = 6
+    ANGLES_RADIANT = np.pi/6
+    MAX_ROTATIONS = 13
 
     found, x_c, y_c = False, None, None
     for i in range(MAX_ROTATIONS):

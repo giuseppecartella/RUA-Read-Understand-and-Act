@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import cv2
 import os
@@ -58,10 +60,9 @@ class Detection_Helper():
     def compute_depth_distance(self, x_c, y_c, depth):
         HALF_WINDOW_SIZE = int(self.WINDOW_SIZE / 2)
 
-        x_c, y_c = round(x_c), round(y_c)
-
         # INPAINTING
         # define masks. Points where depth is = 0.
+        depth = depth.astype('float32')
         mask = np.where(depth == 0, 255, 0).astype('uint8')
         dst = cv2.inpaint(depth, mask, 3, cv2.INPAINT_TELEA)
 
@@ -69,7 +70,7 @@ class Detection_Helper():
         upper_limit = y_c + HALF_WINDOW_SIZE
         left_limit = x_c - HALF_WINDOW_SIZE
         right_limit = x_c + HALF_WINDOW_SIZE
-        depth = dst[bottom_limit:upper_limit, left_limit, right_limit]
+        depth = dst[bottom_limit:upper_limit, left_limit:right_limit]
 
         # application median filter and removing borders
         median = cv2.medianBlur(depth, 3)
