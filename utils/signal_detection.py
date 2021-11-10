@@ -58,24 +58,29 @@ class Detection_Helper():
             x_c, y_c = self.find_centre_coords(coords)
             return True, x_c, y_c
 
+    def inpaint_d_img(self, d_img):
+        d_img = d_img.astype('float32')
+        mask = np.where(d_img == 0, 255, 0).astype('uint8')
+        d_img = cv2.inpaint(d_img, mask, 3, cv2.INPAINT_TELEA)
+        d_img = cv2.medianBlur(d_img, 3)
+        d_img = d_img[1:-1, 1:-1]
+        d_img = cv2.copyMakeBorder(d_img, 1, 1, 1, 1, cv2.BORDER_REFLECT)
+        return d_img
+
+
     def compute_depth_distance(self, x_c, y_c, depth):
         HALF_WINDOW_SIZE = int(self.WINDOW_SIZE / 2)
 
         # INPAINTING
         # define masks. Points where depth is = 0.
-        depth = depth.astype('float32')
-        mask = np.where(depth == 0, 255, 0).astype('uint8')
-        dst = cv2.inpaint(depth, mask, 3, cv2.INPAINT_TELEA)
-
+        depth = self.inpaint_d_img(depth)
+        
         bottom_limit = y_c - HALF_WINDOW_SIZE
         upper_limit = y_c + HALF_WINDOW_SIZE
         left_limit = x_c - HALF_WINDOW_SIZE
         right_limit = x_c + HALF_WINDOW_SIZE
-        depth = dst[bottom_limit:upper_limit, left_limit:right_limit]
+        final_depth = depth[bottom_limit:upper_limit, left_limit:right_limit]
 
-        # application median filter and removing borders
-        median = cv2.medianBlur(depth, 3)
-        removed_border = median[1:-1, 1:-1]
-        final_depth = cv2.copyMakeBorder(removed_border, 1, 1, 1, 1, cv2.BORDER_REFLECT)
         depth_value = np.median(final_depth)
+
         return depth_value
