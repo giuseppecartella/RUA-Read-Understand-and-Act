@@ -54,6 +54,22 @@ def construct_planimetry(final_depth):
                 planimetry[i][c] = 1
     return planimetry
 
+def concat_paths(paths):
+    new_paths = []
+
+    cur_path = paths[0]
+    for idx, path in enumerate(paths):
+        if idx == len(paths) - 1:
+            break
+
+        if paths[idx+1][0] - cur_path[1] < 15:
+            cur_path[1] = paths[idx+1][0]
+        else:
+            new_paths.append(cur_path)
+            cur_path = path[idx + 1]
+            print(cur_path)
+
+    return new_paths
 
 def compute_paths(holes):
     #Lista dei boundaries di gap in cui è possibile passare per andare avanti verso il segnale
@@ -66,10 +82,15 @@ def compute_paths(holes):
         boundary_left = np.argmin(holes[boundary_left:]) + boundary_left
         boundary_right = np.argmax(holes[boundary_left:]) + boundary_left
 
+        if boundary_left == boundary_right:
+            boundary_right = len(holes) - 1
+
         if (boundary_left, boundary_right) == (boundary_left_old, boundary_right_old):
             break
 
-        if boundary_right - boundary_left > 30: #30 intanto per provare a scremare i gap troppo piccoli in cui il robot comunque 
+        print('Boundaries: {}, {}'.format(boundary_left, boundary_right))
+
+        if boundary_right - boundary_left > 10: #30 intanto per provare a scremare i gap troppo piccoli in cui il robot comunque 
                                                 #non riuscirà a passare
             paths.append((boundary_left, boundary_right))
 
@@ -81,18 +102,35 @@ def compute_paths(holes):
 #restituisce le coordinate centrali del gap in cui il robot deve passare.
 def compute_different_distance(bot_moves, coordinates_3D_signal, paths, d_img):
     masked_depth = np.where(d_img> 0.5, 0, 255)
+    cv2.imwrite('masked.jpg', masked_depth)
 
     best_distance = -1
     target_position = [0.0, 0.0, 0.0]
     distances = []
 
-    for (x_left_rgb, x_right_rgb) in paths:     
-        y_right_rgb = np.where(masked_depth[:, x_right_rgb] == 255)[0][0]
-        y_left_rgb = np.where(masked_depth[:, x_left_rgb] == 255)[0][0]
+    for (x_left_rgb, x_right_rgb) in paths:    
+        print(x_left_rgb, x_right_rgb)
+        if x_left_rgb == 0:
+            y_right_rgb = np.where(masked_depth[:, x_right_rgb - 1] == 255)[0][0]
+            #coordinates_right = compute_3d_point(bot_moves.robot, [x_right_rgb, y_right_rgb], d_img)
+            y_left_rgb = y_right_rgb
+        elif x_right_rgb == len(d_img[0]) - 1:
+            print('Sono entrato')
+            y_left_rgb = np.where(masked_depth[:, x_left_rgb - 1] == 255)[0][0]
+            print(y_left_rgb)
+            #coordinates_left = compute_3d_point(bot_moves.robot, [x_left_rgb, y_left_rgb], d_img)
+            y_right_rgb = y_left_rgb
+        else:
+            y_right_rgb = np.where(masked_depth[:, x_right_rgb - 1] == 255)[0][0]
+            y_left_rgb = np.where(masked_depth[:, x_left_rgb - 1] == 255)[0][0]
+            
+
+        #print('Eccociiii')
+        #print(y_right_rgb, y_left_rgb)
+        #print("Boundary_Left - Coordinate 3D dello spazio in cui passare: ", coordinates_left)
+        #print("Boundary_Rigth - Coordinate 3D dello spazio in cui passare: ", coordinates_right)
         coordinates_left = compute_3d_point(bot_moves.robot, [x_left_rgb, y_left_rgb], d_img)
         coordinates_right = compute_3d_point(bot_moves.robot, [x_right_rgb, y_right_rgb], d_img)
-        print("Boundary_Left - Coordinate 3D dello spazio in cui passare: ", coordinates_left)
-        print("Boundary_Rigth - Coordinate 3D dello spazio in cui passare: ", coordinates_right)
 
         gap_space = np.sqrt((coordinates_left[0][0] - coordinates_right[0][0])**2 + (coordinates_left[0][1] - coordinates_right[0][1])**2)
         if gap_space < parameters.BASE_ROBOT + 0.10: #10 cm of tollerance
@@ -104,11 +142,11 @@ def compute_different_distance(bot_moves, coordinates_3D_signal, paths, d_img):
 
         distances.append([center_x, center_y, 0])
         #Distanza [robot - centro_gap] + [centro_gap - segnale]
-        distance = np.sqrt(center_x ** 2 + center_y ** 2) + np.sqrt((center_x - coordinates_3D_signal[0]) ** 2 + (center_y - coordinates_3D_signal[1])**2)
+        distance = np.sqrt(center_x ** 2 + center_y ** 2) + np.sqrt((center_x - coordinates_3D_signal[0][0]) ** 2 + (center_y - coordinates_3D_signal[0][1])**2)
 
         if best_distance == -1 or distance < best_distance:
             best_distance = distance
-            target_position = [center_x, center_y, 0.0]
+            target_position = [0.5,  - coordinates_left[0][1] - 0.10, 0.0]
     return distances, target_position, best_distance
     
     '''
