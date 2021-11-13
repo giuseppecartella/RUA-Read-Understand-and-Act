@@ -27,10 +27,11 @@ class RobotWrapper():
     def _inpaint_depth_img(self, depth_img):
         result = depth_img.astype(np.single)
         mask = np.where(result == 0, 255, 0).astype(np.ubyte)
+        kernel = np.ones((5,5))
+        mask = cv2.dilate(mask, kernel, iterations=2)
         result = cv2.inpaint(result, mask, 3, cv2.INPAINT_TELEA)
         result = cv2.medianBlur(result, 5)
-        result = result[1:-1, 1:-1]
-        result = cv2.copyMakeBorder(result, 1, 1, 1, 1, cv2.BORDER_REFLECT)
+        result = cv2.medianBlur(result, 5)
         return result
 
     def get_intrinsic_matrix(self):

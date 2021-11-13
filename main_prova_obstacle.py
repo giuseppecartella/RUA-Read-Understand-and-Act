@@ -68,8 +68,8 @@ if __name__ == '__main__':
     for i in range(MAX_ROTATIONS):
         print('{} Acquisition of the frame RGBD...'.format(i))
         #rgb_img, d_img = bot_moves.read_frame()
-        rgb_img = cv2.cvtColor(cv2.imread('prova.png'), cv2.COLOR_BGR2RGB)
-        d_img = np.load('prova.npy')
+        rgb_img = cv2.cvtColor(cv2.imread('obstacle3.png'), cv2.COLOR_BGR2RGB)
+        d_img = np.load('obstacle3.npy')
 
         d_img = robot_wrapper._inpaint_depth_img(d_img)
         #plt.imshow(d_img, cmap='gray')
@@ -77,14 +77,13 @@ if __name__ == '__main__':
 
         matrix_3d_points = np.round(get_all_3d_points(d_img) * 100).astype('int32') #transform from meters to cm
         mask = np.logical_or(matrix_3d_points[:,:,2] < (0.1 * 100), matrix_3d_points[:,:,2] > (parameters.ROBOT_HEIGHT * 100))
+        #var = np.where(mask == False, d_img, 0)
         #100 because we transform from meters to cm
-        plt.imshow(mask, cmap='gray')
-        plt.show()
-
+      
         found, x_c, y_c = signal_detector.look_for_signal(rgb_img)
         signal_3d_point = np.round(get_single_3d_point(d_img, y_c, x_c)[0] * 100).astype('int32') #[X,Y,Z]
         #NB: LA Y 3D è POSITIVA A SX DEL ROBOT. 
-        print(signal_3d_point)
+
         #map creation
         y_left = np.max(matrix_3d_points[:,:,1])
         y_right = np.min(matrix_3d_points[:,:,1])
@@ -92,24 +91,37 @@ if __name__ == '__main__':
     
         if found:
             signal_depth = signal_3d_point[0] #get just X coordinate
-            planimetry = np.zeros((signal_depth, y_range))
+
+            #var = np.where(var < signal_depth/100, var, 0)
+            #plt.imshow(var, cmap='gray')
+            #plt.show()
+            planimetry_obstacles, planimetry_free = np.zeros((signal_depth, y_range)), np.zeros((signal_depth, y_range))
             #plt.matshow(planimetry, cmap='gray', origin='lower')
             #plt.show()
 
             #obstacles = np.logical_and(matrix_3d_points[mask == False], matrix_3d_points[:,:,0] < signal_depth)
             obstacles = matrix_3d_points[[mask == False] and [matrix_3d_points[:,:,0] < signal_depth]] #consider only points that are obstacles
-        
+            free_points = matrix_3d_points[matrix_3d_points[:,:,2] < 0.1 * 100]
+            free_points = free_points[free_points[:, 0] < signal_depth]
+            
+
             middle_position = int(np.round(y_range / 2))
+            free_points = free_points[:,[0,1]]
             obstacles = obstacles[:,[0,1]]
       
-            x_indices_planimetry = obstacles[:,0]
-        
-            y_indices_planimetry = middle_position - (obstacles[:,1])
-            print(y_indices_planimetry)
-        
-            #print(x_indices_planimetry[0], y_indices_planimetry[0])
-            planimetry[x_indices_planimetry, y_indices_planimetry] = 255
-            plt.matshow(planimetry, cmap='gray', origin='lower')
+            x_planimetry_free = free_points[:,0]
+            y_planimetry_free = middle_position - (free_points[:,1])
+
+            x_planimetry_obst = obstacles[:,0]
+            y_planimetry_obst = middle_position - (obstacles[:,1])
+
+            planimetry_free[x_planimetry_free, y_planimetry_free] = 255
+            planimetry_obstacles[x_planimetry_obst, y_planimetry_obst] = 255
+
+            final_planimetry = planimetry_obstacles - planimetry_free
+            kernel = np.ones((3,3))
+            final_planimetry = cv2.dilate(final_planimetry, kernel, iterations=2)
+            plt.matshow(final_planimetry, cmap='gray', origin='lower')
             plt.show()
 
             break
