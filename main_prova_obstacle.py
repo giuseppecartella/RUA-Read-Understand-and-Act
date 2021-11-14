@@ -71,15 +71,16 @@ if __name__ == '__main__':
     for i in range(MAX_ROTATIONS):
         print('{} Acquisition of the frame RGBD...'.format(i))
         #rgb_img, d_img = bot_moves.read_frame()
-        rgb_img = cv2.cvtColor(cv2.imread('obstacle3.png'), cv2.COLOR_BGR2RGB)
-        d_img = np.load('obstacle3.npy')
-
+        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
+        d_img = np.load('test_images/obstacle3.npy')
         d_img = robot_wrapper._inpaint_depth_img(d_img)
         #plt.imshow(d_img, cmap='gray')
         #plt.show()
 
         matrix_3d_points = np.round(get_all_3d_points(d_img) * 100).astype('int32') #transform from meters to cm
         mask = np.logical_or(matrix_3d_points[:,:,2] < (0.1 * 100), matrix_3d_points[:,:,2] > (parameters.ROBOT_HEIGHT * 100))
+        #plt.imshow(mask, cmap='gray')
+        #plt.show()
         #var = np.where(mask == False, d_img, 0)
         #100 because we transform from meters to cm
       
@@ -103,9 +104,13 @@ if __name__ == '__main__':
 
             #obstacles = np.logical_and(matrix_3d_points[mask == False], matrix_3d_points[:,:,0] < signal_depth)
             obstacles = matrix_3d_points[[mask == False] and [matrix_3d_points[:,:,0] < signal_depth]] #consider only points that are obstacles
+            #obstacles = matrix_3d_points[matrix_3d_points[:,:,2] > 0.1*100]
+            #obstacles = obstacles[obstacles[:, 2] < parameters.ROBOT_HEIGHT * 100]
+            #obstacles = obstacles[obstacles[:, 0] < signal_depth]
+
             free_points = matrix_3d_points[matrix_3d_points[:,:,2] < 0.1 * 100]
             free_points = free_points[free_points[:, 0] < signal_depth]
-            
+            #free_points = free_points[[free_points[:, 2] < parameters.ROBOT_HEIGHT * 100]]
 
             middle_position = int(np.round(y_range / 2))
             free_points = free_points[:,[0,1]]
@@ -120,9 +125,15 @@ if __name__ == '__main__':
             planimetry_free[x_planimetry_free, y_planimetry_free] = 255
             planimetry_obstacles[x_planimetry_obst, y_planimetry_obst] = 255
 
+            plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
+            plt.show()
+
+            plt.matshow(planimetry_free, cmap='gray', origin='lower')
+            plt.show()
+
             final_planimetry = planimetry_obstacles - planimetry_free
-            kernel = np.ones((3,3))
-            final_planimetry = cv2.dilate(final_planimetry, kernel, iterations=2)
+            #kernel = np.ones((3,3))
+            #final_planimetry = cv2.dilate(final_planimetry, kernel, iterations=2)
             
             #final_planimetry = final_planimetry[:, 300:600]
             plt.matshow(final_planimetry, cmap='gray', origin='lower')

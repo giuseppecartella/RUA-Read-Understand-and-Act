@@ -1,15 +1,10 @@
 import numpy as np
 import cv2
 
-#da spiegare a sara e nicolas:
-#get_signal_distance() is the old compute_depth_distance()
-#non serve più l'inpaint perchè lo facciamo subito quando 
-#faccio get_rgb_depth()
-
 class SignalDetector():
-    def __init__(self, template, window_size=16):
+    def __init__(self, window_size=16):
         self.WINDOW_SIZE = window_size
-        self.template = template
+        self.template = cv2.cvtColor(cv2.imread('utils/template.jpg'), cv2.COLOR_BGR2RGB)
 
     def _compute_sift_imgs(self, img1, img2):
         #sift = cv2.xfeatures2d.SIFT_create() #needed for Python 2

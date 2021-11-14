@@ -1,5 +1,5 @@
 import numpy as np
-from utils.node import Node
+from .node import Node
 
 
 class A_star():
@@ -119,39 +119,6 @@ class A_star():
                 # Add the child to the open list
                 open_list.append(child)
 
-
-                # i just want to do steps of 1m, so i stop when i get to 100
+                #I just want to do steps of 1m, so i stop when i get to 100
                 if child.position[0] > 100:
                     return self.return_path(current_node)
-
-
-def example():
-
-    maze = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-
-    start = (0, 0)
-    end = (7, 6)
-    a_star = A_star()
-    path = a_star.compute(maze, start, end)
-
-    path_result = np.zeros((9,10))
-    for i in path:
-        x = i[0]
-        y = i[1]
-        path_result[x, y] = 1
-
-    print(path)
-    print(path_result)
-
-
-
-example()

@@ -4,15 +4,6 @@
 import numpy as np
 import cv2
 
-#da spiegare a sara e nicolas le modifiche:
-#aggiunto metodo per intrinsic matrix, calcolo punto nel 3d space
-#poi 2 semplice funzioni e basta uno per spostarsi in punto x,y l'altro solo
-#per rotazione e basta.
-#prima di ritornare get_rgb_depth() facciamo subit inpainting 
-#cosi non dobbiamo più pensarci
-#np.single = float32
-#np.ubyte = uint8
-
 class RobotWrapper():
     def __init__(self):
         #self.robot = Robot('locobot')

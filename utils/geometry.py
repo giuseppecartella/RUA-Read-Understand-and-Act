@@ -83,7 +83,6 @@ def compute_3d_point(depth_img, rows, cols):
     pts = pts + base2cam_trans.T
     return pts
 
-
 def get_all_3d_points(depth_image):
     rows, cols = depth_image.shape[0], depth_image.shape[1]
     indices = np.indices((rows, cols))
@@ -94,4 +93,3 @@ def get_all_3d_points(depth_image):
 
 def get_single_3d_point(depth_image, row, col):
     return compute_3d_point(depth_image, row, col)
-
