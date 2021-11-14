@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 import os
 import cv2
+import time
 #from pyrobot import Robot
 import numpy as np
 import matplotlib.pyplot as plt
+from utils import shortest_path
 from utils.robot_wrapper import RobotWrapper
 #from functions_obstacles import compute_3d_point, compute_different_distance, compute_paths, construct_planimetry
 from utils.signal_detector import SignalDetector
 from utils.geometry import compute_3d_point, get_all_3d_points, get_single_3d_point
 from utils import parameters
+from utils.shortest_path import A_star
 
 
 def reach_signal(bot_moves, helper_detection, poi, d_img):
@@ -94,7 +97,6 @@ if __name__ == '__main__':
 
             #var = np.where(var < signal_depth/100, var, 0)
             #plt.imshow(var, cmap='gray')
-            #plt.show()
             planimetry_obstacles, planimetry_free = np.zeros((signal_depth, y_range)), np.zeros((signal_depth, y_range))
             #plt.matshow(planimetry, cmap='gray', origin='lower')
             #plt.show()
@@ -121,9 +123,27 @@ if __name__ == '__main__':
             final_planimetry = planimetry_obstacles - planimetry_free
             kernel = np.ones((3,3))
             final_planimetry = cv2.dilate(final_planimetry, kernel, iterations=2)
+            
+            #final_planimetry = final_planimetry[:, 300:600]
+            plt.matshow(final_planimetry, cmap='gray', origin='lower')
+            plt.show()
+            
+
+            start = (0, middle_position)        
+            end = (signal_depth, middle_position - signal_3d_point[1])
+            a_star_alg = A_star()           
+            start_time = time.time()
+
+            path = a_star_alg.compute(final_planimetry, start, end)
+            print("--- %s seconds ---" % (time.time() - start_time))
+            print(path)
+
+            for i in path :
+                final_planimetry[i[0], i[1]] = 255
             plt.matshow(final_planimetry, cmap='gray', origin='lower')
             plt.show()
 
+            
             break
 
             #now we have to insert ones that indicates obstacles
