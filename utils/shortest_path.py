@@ -120,5 +120,5 @@ class A_star():
                 open_list.append(child)
 
                 #I just want to do steps of 1m, so i stop when i get to 100
-                if child.position[0] > 100:
-                    return self.return_path(current_node)
+                #if child.position[0] > 100:
+                    #return self.return_path(current_node)

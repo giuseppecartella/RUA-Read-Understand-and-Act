@@ -71,19 +71,15 @@ if __name__ == '__main__':
     for i in range(MAX_ROTATIONS):
         print('{} Acquisition of the frame RGBD...'.format(i))
         #rgb_img, d_img = bot_moves.read_frame()
-        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
-        d_img = np.load('test_images/obstacle3.npy')
+        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle1.png'), cv2.COLOR_BGR2RGB)
+        d_img = np.load('test_images/obstacle1.npy')
         d_img = robot_wrapper._inpaint_depth_img(d_img)
-        #plt.imshow(d_img, cmap='gray')
-        #plt.show()
 
         matrix_3d_points = np.round(get_all_3d_points(d_img) * 100).astype('int32') #transform from meters to cm
-        mask = np.logical_or(matrix_3d_points[:,:,2] < (0.1 * 100), matrix_3d_points[:,:,2] > (parameters.ROBOT_HEIGHT * 100))
-        #plt.imshow(mask, cmap='gray')
-        #plt.show()
-        #var = np.where(mask == False, d_img, 0)
-        #100 because we transform from meters to cm
-      
+        coordinates_Z = matrix_3d_points[:,:,2]
+        mask2 = np.logical_or(coordinates_Z < (0.08 * 100), coordinates_Z > (parameters.ROBOT_HEIGHT * 100))
+        
+
         found, x_c, y_c = signal_detector.look_for_signal(rgb_img)
         signal_3d_point = np.round(get_single_3d_point(d_img, y_c, x_c)[0] * 100).astype('int32') #[X,Y,Z]
         #NB: LA Y 3D è POSITIVA A SX DEL ROBOT. 
@@ -95,15 +91,32 @@ if __name__ == '__main__':
     
         if found:
             signal_depth = signal_3d_point[0] #get just X coordinate
+            coordinates_X = matrix_3d_points[:,:,0]
+            mask = np.logical_and(coordinates_Z > (0.08 * 100), coordinates_Z < (parameters.ROBOT_HEIGHT * 100))
+            mask = np.logical_and(mask, coordinates_X < signal_depth)
+            #conto ora i pixel bianchi(ovvero quelli che mi interessano)
+            #se tutto e corretto devono poi equivalere al numero di pixel bianchi nella planimetria
+            print('Num pixel bianchi: {}'.format(np.count_nonzero(mask)))
+            plt.imshow(mask, cmap='gray')
+            plt.show()
 
-            #var = np.where(var < signal_depth/100, var, 0)
-            #plt.imshow(var, cmap='gray')
             planimetry_obstacles, planimetry_free = np.zeros((signal_depth, y_range)), np.zeros((signal_depth, y_range))
-            #plt.matshow(planimetry, cmap='gray', origin='lower')
-            #plt.show()
 
+            #obstacle is (480, 640) of True and False
+            coordinates = matrix_3d_points[mask==True][:,[0,1]]
+            print('num tot coordinate: {}'.format(len(coordinates)))
+            middle_position = int(np.round(y_range / 2))
+            x_planimetry_obst = coordinates[:,0]
+            y_planimetry_obst = middle_position - (coordinates[:,1])
+            print(len(x_planimetry_obst), len(y_planimetry_obst))
+            planimetry_obstacles[x_planimetry_obst, y_planimetry_obst] = 255
+            print('Num pixel bianchi planimetria: {}'.format(np.count_nonzero(planimetry_obstacles)))
+            plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
+            plt.show()
+
+            
             #obstacles = np.logical_and(matrix_3d_points[mask == False], matrix_3d_points[:,:,0] < signal_depth)
-            obstacles = matrix_3d_points[[mask == False] and [matrix_3d_points[:,:,0] < signal_depth]] #consider only points that are obstacles
+            obstacles = matrix_3d_points[[mask2 == False] and [matrix_3d_points[:,:,0] < signal_depth]] #consider only points that are obstacles
             #obstacles = matrix_3d_points[matrix_3d_points[:,:,2] > 0.1*100]
             #obstacles = obstacles[obstacles[:, 2] < parameters.ROBOT_HEIGHT * 100]
             #obstacles = obstacles[obstacles[:, 0] < signal_depth]
@@ -115,6 +128,9 @@ if __name__ == '__main__':
             middle_position = int(np.round(y_range / 2))
             free_points = free_points[:,[0,1]]
             obstacles = obstacles[:,[0,1]]
+
+            print(len(coordinates), len(obstacles))
+        
       
             x_planimetry_free = free_points[:,0]
             y_planimetry_free = middle_position - (free_points[:,1])
@@ -137,15 +153,17 @@ if __name__ == '__main__':
             
             #final_planimetry = final_planimetry[:, 300:600]
             plt.matshow(final_planimetry, cmap='gray', origin='lower')
+            print('Num pixel bianchi: {}'.format(np.count_nonzero(final_planimetry)))
             plt.show()
             
-
+            
+            print(signal_3d_point)
             start = (0, middle_position)        
             end = (signal_depth, middle_position - signal_3d_point[1])
             a_star_alg = A_star()           
             start_time = time.time()
 
-            path = a_star_alg.compute(final_planimetry, start, end)
+            path = a_star_alg.compute(final_planimetry, start, end, True)
             print("--- %s seconds ---" % (time.time() - start_time))
             print(path)
 
@@ -161,7 +179,7 @@ if __name__ == '__main__':
 
             
         else:
-            #bot_moves.left_turn(ANGLES_RADIANT)
+            #robot_wrapper.turn(ANGLES_RADIANT)
             pass
 
 
