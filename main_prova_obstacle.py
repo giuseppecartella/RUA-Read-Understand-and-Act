@@ -41,11 +41,12 @@ def reach_signal(bot_moves, helper_detection, poi, d_img):
         print('No path found. I should explore the neighborhood!')
         return False
     else:
-        distances, target_position, best_distance = compute_different_distance(bot_moves, pts, paths, depth)
-        print('Target position: {}'.format(target_position))
+        distances, target_position, best_distance = (compute_different_distance(bot_moves, pts, paths, depth))
+        #print('Target position: {}'.format(target_position))
         if len(distances) == 0:
             print('There are some gaps but they are too small for the robot!')
             print('Exploration should start')
+            pass
             return False
         
         else:
@@ -65,14 +66,14 @@ if __name__ == '__main__':
     
     #Keep moving until signal is not found. Each time performs
     ANGLES_RADIANT = np.pi/6
-    MAX_ROTATIONS = 13
+    MAX_ROTATIONS = 14
 
     found, x_c, y_c = False, None, None
     for i in range(MAX_ROTATIONS):
         print('{} Acquisition of the frame RGBD...'.format(i))
         #rgb_img, d_img = bot_moves.read_frame()
-        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle1.png'), cv2.COLOR_BGR2RGB)
-        d_img = np.load('test_images/obstacle1.npy')
+        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
+        d_img = np.load('test_images/obstacle3.npy')
         d_img = robot_wrapper._inpaint_depth_img(d_img)
 
         matrix_3d_points = np.round(get_all_3d_points(d_img) * 100).astype('int32') #transform from meters to cm
@@ -85,10 +86,11 @@ if __name__ == '__main__':
         #NB: LA Y 3D è POSITIVA A SX DEL ROBOT. 
 
         #map creation
-        y_left = np.max(matrix_3d_points[:,:,1])
+        y_left = np.max(matrix_3d_points[:,:,1]) #max because y is positive to left
         y_right = np.min(matrix_3d_points[:,:,1])
         y_range = np.abs(y_left - y_right)
-    
+        
+
         if found:
             signal_depth = signal_3d_point[0] #get just X coordinate
             coordinates_X = matrix_3d_points[:,:,0]
@@ -100,84 +102,74 @@ if __name__ == '__main__':
             plt.imshow(mask, cmap='gray')
             plt.show()
 
-            planimetry_obstacles, planimetry_free = np.zeros((signal_depth, y_range)), np.zeros((signal_depth, y_range))
+            
+            obstacles = matrix_3d_points[mask==True]
+            #y_left = np.max(obstacles[:, 1]) #max because y is positive to left
+            #y_right = np.min(obstacles[:, 1])
+            #y_range = np.abs(y_left - y_right)
+            #print(y_left, y_right, y_range)
+            
 
-            #obstacle is (480, 640) of True and False
-            coordinates = matrix_3d_points[mask==True][:,[0,1]]
-            print('num tot coordinate: {}'.format(len(coordinates)))
+            x_coords = obstacles[:,0]
             middle_position = int(np.round(y_range / 2))
-            x_planimetry_obst = coordinates[:,0]
-            y_planimetry_obst = middle_position - (coordinates[:,1])
-            print(len(x_planimetry_obst), len(y_planimetry_obst))
-            planimetry_obstacles[x_planimetry_obst, y_planimetry_obst] = 255
-            print('Num pixel bianchi planimetria: {}'.format(np.count_nonzero(planimetry_obstacles)))
+            y_coords = middle_position - obstacles[:,1]
+
+            planimetry_obstacles = np.zeros((signal_depth, y_range))
+            planimetry_obstacles[x_coords, y_coords] = 255
+            planimetry_obstacles = np.where(planimetry_obstacles < 0, 0, planimetry_obstacles) #We put 0 for values which can become negative
+            
+
+            boundary_left = np.max(planimetry_obstacles, axis=0)
+            boundary_left = np.argmax(boundary_left)
+
+            flipped_matrix = planimetry_obstacles[:,::-1]
+            boundary_right = np.max(flipped_matrix, axis=0)
+            boundary_right = np.argmax(boundary_right)
+            boundary_right = planimetry_obstacles.shape[1] - boundary_right
+            
+ 
+            #boundary_left = np.unravel_index(np.argmax(planimetry_obstacles, axis=0), planimetry_obstacles.shape)[1]
+            #flipped_matrix = np.flip(planimetry_obstacles, axis=0)
+            #boundary_right = np.unravel_index(np.argmax(flipped_matrix, axis=0), planimetry_obstacles.shape)[1]
+            #boundary_right = planimetry_obstacles.shape[1] - boundary_right
+
+            print(boundary_left, boundary_right)
+            old_planimetry_dimension = planimetry_obstacles.shape
+            planimetry_obstacles = planimetry_obstacles[:, boundary_left:boundary_right]
+            kernel = np.ones((3,3))
+            planimetry_obstacles = cv2.dilate(planimetry_obstacles, kernel, iterations=1)
+            planimetry_obstacles = cv2.GaussianBlur(planimetry_obstacles, (31,31), (31-1)/5)
             plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
             plt.show()
-
             
-            #obstacles = np.logical_and(matrix_3d_points[mask == False], matrix_3d_points[:,:,0] < signal_depth)
-            obstacles = matrix_3d_points[[mask2 == False] and [matrix_3d_points[:,:,0] < signal_depth]] #consider only points that are obstacles
-            #obstacles = matrix_3d_points[matrix_3d_points[:,:,2] > 0.1*100]
-            #obstacles = obstacles[obstacles[:, 2] < parameters.ROBOT_HEIGHT * 100]
-            #obstacles = obstacles[obstacles[:, 0] < signal_depth]
 
-            free_points = matrix_3d_points[matrix_3d_points[:,:,2] < 0.1 * 100]
-            free_points = free_points[free_points[:, 0] < signal_depth]
-            #free_points = free_points[[free_points[:, 2] < parameters.ROBOT_HEIGHT * 100]]
+            #PATH COMPUTATION---------------------------#
+            middle_position = planimetry_obstacles.shape[1] // 2
+            #proporzione: y_vecchiosegnale:y_vecchia = ynuovasegnale:y_nuova
+            y_signal = signal_3d_point[1] * planimetry_obstacles.shape[1] // old_planimetry_dimension[1]
 
-            middle_position = int(np.round(y_range / 2))
-            free_points = free_points[:,[0,1]]
-            obstacles = obstacles[:,[0,1]]
-
-            print(len(coordinates), len(obstacles))
-        
-      
-            x_planimetry_free = free_points[:,0]
-            y_planimetry_free = middle_position - (free_points[:,1])
-
-            x_planimetry_obst = obstacles[:,0]
-            y_planimetry_obst = middle_position - (obstacles[:,1])
-
-            planimetry_free[x_planimetry_free, y_planimetry_free] = 255
-            planimetry_obstacles[x_planimetry_obst, y_planimetry_obst] = 255
-
-            plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
-            plt.show()
-
-            plt.matshow(planimetry_free, cmap='gray', origin='lower')
-            plt.show()
-
-            final_planimetry = planimetry_obstacles - planimetry_free
-            #kernel = np.ones((3,3))
-            #final_planimetry = cv2.dilate(final_planimetry, kernel, iterations=2)
-            
-            #final_planimetry = final_planimetry[:, 300:600]
-            plt.matshow(final_planimetry, cmap='gray', origin='lower')
-            print('Num pixel bianchi: {}'.format(np.count_nonzero(final_planimetry)))
-            plt.show()
-            
-            
-            print(signal_3d_point)
-            start = (0, middle_position)        
-            end = (signal_depth, middle_position - signal_3d_point[1])
+            start = (100, middle_position)     
+            end = (signal_depth, middle_position - y_signal)
+            print(end)
             a_star_alg = A_star()           
             start_time = time.time()
 
-            path = a_star_alg.compute(final_planimetry, start, end, True)
+            path = a_star_alg.compute(planimetry_obstacles, start, end, False)
             print("--- %s seconds ---" % (time.time() - start_time))
             print(path)
 
-            for i in path :
-                final_planimetry[i[0], i[1]] = 255
-            plt.matshow(final_planimetry, cmap='gray', origin='lower')
+            for i in path:
+                planimetry_obstacles[i[0], i[1]] = 255
+            plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
             plt.show()
 
-            
+            for i in range(15,len(path), 15):
+                x = i[0]
+                y = i[1]
+                robot_wrapper.reach_point(x,y)
+                
             break
 
-            #now we have to insert ones that indicates obstacles
-
-            
         else:
             #robot_wrapper.turn(ANGLES_RADIANT)
             pass

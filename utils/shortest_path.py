@@ -38,6 +38,7 @@ class A_star():
         # Adding a stop condition
         outer_iterations = 0
         max_iterations = (len(maze) // 2) ** 2
+        #max_iterations = 10000
 
         # what squares do we search
         adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0),)
@@ -68,6 +69,7 @@ class A_star():
 
             # Found the goal
             if current_node == end_node:
+                print('Sono arrivato a destinazioneeeee')
                 return self.return_path(current_node)
 
             # Generate children
@@ -120,5 +122,5 @@ class A_star():
                 open_list.append(child)
 
                 #I just want to do steps of 1m, so i stop when i get to 100
-                #if child.position[0] > 100:
-                    #return self.return_path(current_node)
+                if child.position[0] > 100:
+                    return self.return_path(current_node)
