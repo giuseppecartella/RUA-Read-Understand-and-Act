@@ -28,9 +28,13 @@ class RobotWrapper():
     def get_intrinsic_matrix(self):
         return self.camera.get_intrinsics()
 
-    def reach_point(self, x, y):
+    def reach_relative_point(self, x, y):
         target_position = [x, y, 0.0]
         self.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
+
+    def reach_absolute_point(self, x, y):
+        target_position = [x, y, 0.0]
+        self.robot.base.go_to_absolute(target_position, smooth=False, close_loop=True)
 
     def turn(self, angle_radiant):
         target_position = [0.0, 0.0, angle_radiant]

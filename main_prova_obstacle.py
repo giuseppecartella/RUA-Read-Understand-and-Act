@@ -148,7 +148,7 @@ if __name__ == '__main__':
             #proporzione: y_vecchiosegnale:y_vecchia = ynuovasegnale:y_nuova
             y_signal = signal_3d_point[1] * planimetry_obstacles.shape[1] // old_planimetry_dimension[1]
 
-            start = (100, middle_position)     
+            start = (0, middle_position)     
             end = (signal_depth, middle_position - y_signal)
             print(end)
             a_star_alg = A_star()           
@@ -163,12 +163,18 @@ if __name__ == '__main__':
             plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
             plt.show()
 
+            """
             for i in range(15,len(path), 15):
                 x = i[0]
                 y = i[1]
-                robot_wrapper.reach_point(x,y)
-                
+                robot_wrapper.reach_absolute_point(x,y)
+                #ATTENZIONE IN OTTICA DI IMPLEMENTAZIONE DI UN WHILE 
+                #CHE QUINDI PERMETTA DI NON DOVER RIAVVIARE OGNI VOLTA LO SCRIPT
+                #BISOGNA RIAGGIORNARE LA GLOBAL POSITION SETTANDOLA A ZERO
+                #CIO VA FATTO OGNI VOLTA CHE SI RIACQUISISCE
+            """
             break
+        
 
         else:
             #robot_wrapper.turn(ANGLES_RADIANT)
