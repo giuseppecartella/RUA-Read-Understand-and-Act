@@ -2,7 +2,7 @@
 import os
 import cv2
 import time
-#from pyrobot import Robot
+from pyrobot import Robot
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import shortest_path
@@ -56,10 +56,6 @@ def reach_signal(bot_moves, helper_detection, poi, d_img):
 
             
 if __name__ == '__main__':
-    #bot = Robot('locobot')
-    #bot.camera.reset()
-
-    #bot_moves = Robot_Movements_Helper(bot)
     robot_wrapper = RobotWrapper()
     template = cv2.imread("utils/template.jpg")
     signal_detector = SignalDetector(template)
@@ -71,10 +67,10 @@ if __name__ == '__main__':
     found, x_c, y_c = False, None, None
     for i in range(MAX_ROTATIONS):
         print('{} Acquisition of the frame RGBD...'.format(i))
-        #rgb_img, d_img = bot_moves.read_frame()
-        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
-        d_img = np.load('test_images/obstacle3.npy')
-        d_img = robot_wrapper._inpaint_depth_img(d_img)
+        rgb_img, d_img = robot_wrapper.get_rgbd_frame()
+        #rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
+        #d_img = np.load('test_images/obstacle3.npy')
+        #d_img = robot_wrapper._inpaint_depth_img(d_img)
 
         matrix_3d_points = np.round(get_all_3d_points(d_img) * 100).astype('int32') #transform from meters to cm
         coordinates_Z = matrix_3d_points[:,:,2]
@@ -96,20 +92,11 @@ if __name__ == '__main__':
             coordinates_X = matrix_3d_points[:,:,0]
             mask = np.logical_and(coordinates_Z > (0.08 * 100), coordinates_Z < (parameters.ROBOT_HEIGHT * 100))
             mask = np.logical_and(mask, coordinates_X < signal_depth)
-            #conto ora i pixel bianchi(ovvero quelli che mi interessano)
-            #se tutto e corretto devono poi equivalere al numero di pixel bianchi nella planimetria
-            print('Num pixel bianchi: {}'.format(np.count_nonzero(mask)))
             plt.imshow(mask, cmap='gray')
             plt.show()
 
             
             obstacles = matrix_3d_points[mask==True]
-            #y_left = np.max(obstacles[:, 1]) #max because y is positive to left
-            #y_right = np.min(obstacles[:, 1])
-            #y_range = np.abs(y_left - y_right)
-            #print(y_left, y_right, y_range)
-            
-
             x_coords = obstacles[:,0]
             middle_position = int(np.round(y_range / 2))
             y_coords = middle_position - obstacles[:,1]
@@ -127,13 +114,6 @@ if __name__ == '__main__':
             boundary_right = np.argmax(boundary_right)
             boundary_right = planimetry_obstacles.shape[1] - boundary_right
             
- 
-            #boundary_left = np.unravel_index(np.argmax(planimetry_obstacles, axis=0), planimetry_obstacles.shape)[1]
-            #flipped_matrix = np.flip(planimetry_obstacles, axis=0)
-            #boundary_right = np.unravel_index(np.argmax(flipped_matrix, axis=0), planimetry_obstacles.shape)[1]
-            #boundary_right = planimetry_obstacles.shape[1] - boundary_right
-
-            print(boundary_left, boundary_right)
             old_planimetry_dimension = planimetry_obstacles.shape
             planimetry_obstacles = planimetry_obstacles[:, boundary_left:boundary_right]
             kernel = np.ones((3,3))
@@ -163,7 +143,7 @@ if __name__ == '__main__':
             plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
             plt.show()
 
-            """
+            
             for i in range(15,len(path), 15):
                 x = i[0]
                 y = i[1]
@@ -172,16 +152,11 @@ if __name__ == '__main__':
                 #CHE QUINDI PERMETTA DI NON DOVER RIAVVIARE OGNI VOLTA LO SCRIPT
                 #BISOGNA RIAGGIORNARE LA GLOBAL POSITION SETTANDOLA A ZERO
                 #CIO VA FATTO OGNI VOLTA CHE SI RIACQUISISCE
-            """
             break
-        
-
-        else:
-            #robot_wrapper.turn(ANGLES_RADIANT)
-            pass
-
-
     
+        else:
+            robot_wrapper.turn(ANGLES_RADIANT)
+            
     """
     if found:
         #signal is found, so now we can manage the robot movement.
