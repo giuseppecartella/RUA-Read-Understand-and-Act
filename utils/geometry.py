@@ -93,3 +93,49 @@ def get_all_3d_points(depth_image):
 
 def get_single_3d_point(depth_image, row, col):
     return compute_3d_point(depth_image, row, col)
+
+def coordinate_projection(starting_pose, current_pose):
+        delta_x = starting_pose[0]
+        delta_y = starting_pose[1]
+        yaw = starting_pose[-1]
+        rot_matrix = np.array(
+            [
+                [np.cos(yaw), -np.sin(yaw), delta_x],
+                [np.sin(yaw), np.cos(yaw), delta_y],
+                [0, 0, 1]
+            ])
+        
+        agent_state = np.expand_dims([current_pose[0], current_pose[1], 1], axis=0).T
+        agent_state = np.matmul(np.linalg.inv(rot_matrix), agent_state)
+        agent_state[-1] = current_pose[-1] - yaw
+
+        return agent_state.reshape((1, 3))
+"""
+class CoordProjection:
+    def __init__(self, starting_pose, debug=False):
+        self.delta_x = starting_pose[0]
+        self.delta_y = starting_pose[1]
+        self.yaw = starting_pose[-1]
+        self.rot_matrix = torch.tensor(
+            [
+                [np.cos(self.yaw), -np.sin(self.yaw), self.delta_x],
+                [np.sin(self.yaw), np.cos(self.yaw), self.delta_y],
+                [0, 0, 1]
+            ],
+            dtype=torch.float32)
+        self.debug = debug
+
+    def _coordinate_projection(self, current_pose):
+        agent_state = torch.tensor([current_pose[0], current_pose[1], 1], dtype=torch.float32).unsqueeze(1)
+        agent_state = torch.mm(torch.inverse(self.rot_matrix), agent_state)
+        agent_state[-1] = current_pose[-1] - self.yaw
+
+        if self.debug:
+            print(f'Rotation Matrix: {self.rot_matrix}')
+            print(f'Agent State: {agent_state}')
+
+        return agent_state.reshape((1, 3))
+
+    def __call__(self, *args, **kwargs):
+        return self._coordinate_projection(*args, **kwargs)
+"""

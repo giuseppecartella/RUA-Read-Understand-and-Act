@@ -5,11 +5,10 @@ import time
 from pyrobot import Robot
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import shortest_path
 from utils.robot_wrapper import RobotWrapper
 #from functions_obstacles import compute_3d_point, compute_different_distance, compute_paths, construct_planimetry
 from utils.signal_detector import SignalDetector
-from utils.geometry import compute_3d_point, get_all_3d_points, get_single_3d_point
+from utils.geometry import compute_3d_point, get_all_3d_points, get_single_3d_point, coordinate_projection
 from utils import parameters
 from utils.shortest_path import A_star
 
@@ -57,6 +56,7 @@ def reach_signal(bot_moves, helper_detection, poi, d_img):
             
 if __name__ == '__main__':
     robot_wrapper = RobotWrapper()
+
     template = cv2.imread("utils/template.jpg")
     signal_detector = SignalDetector(template)
     
@@ -68,13 +68,17 @@ if __name__ == '__main__':
     for i in range(MAX_ROTATIONS):
         print('{} Acquisition of the frame RGBD...'.format(i))
         rgb_img, d_img = robot_wrapper.get_rgbd_frame()
+        
+        plt.imsave('results/rgb.jpg', d_img)
+        plt.imsave('results/depth.png', d_img, cmap='gray')
+        #cv2.imwrite('results/depth.png', d_img * 255)
         #rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
         #d_img = np.load('test_images/obstacle3.npy')
         #d_img = robot_wrapper._inpaint_depth_img(d_img)
 
         matrix_3d_points = np.round(get_all_3d_points(d_img) * 100).astype('int32') #transform from meters to cm
         coordinates_Z = matrix_3d_points[:,:,2]
-        mask2 = np.logical_or(coordinates_Z < (0.08 * 100), coordinates_Z > (parameters.ROBOT_HEIGHT * 100))
+        #mask2 = np.logical_or(coordinates_Z < (0.08 * 100), coordinates_Z > (parameters.ROBOT_HEIGHT * 100))
         
 
         found, x_c, y_c = signal_detector.look_for_signal(rgb_img)
@@ -92,8 +96,9 @@ if __name__ == '__main__':
             coordinates_X = matrix_3d_points[:,:,0]
             mask = np.logical_and(coordinates_Z > (0.08 * 100), coordinates_Z < (parameters.ROBOT_HEIGHT * 100))
             mask = np.logical_and(mask, coordinates_X < signal_depth)
-            plt.imshow(mask, cmap='gray')
-            plt.show()
+            plt.imsave('results/mask.png', mask, cmap='gray')
+            #plt.imshow(mask, cmap='gray')
+            #plt.show()
 
             
             obstacles = matrix_3d_points[mask==True]
@@ -116,11 +121,13 @@ if __name__ == '__main__':
             
             old_planimetry_dimension = planimetry_obstacles.shape
             planimetry_obstacles = planimetry_obstacles[:, boundary_left:boundary_right]
+            plt.imsave('results/pure_planimetry.png', planimetry_obstacles, cmap='gray', origin='lower')
             kernel = np.ones((3,3))
             planimetry_obstacles = cv2.dilate(planimetry_obstacles, kernel, iterations=1)
-            planimetry_obstacles = cv2.GaussianBlur(planimetry_obstacles, (31,31), (31-1)/5)
-            plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
-            plt.show()
+            planimetry_obstacles = cv2.GaussianBlur(planimetry_obstacles, (41,41), (31-1)/5)
+            plt.imsave('results/dilated_blurredplanimetry.png', planimetry_obstacles, cmap='gray', origin='lower')
+            #plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
+            #plt.show()
             
 
             #PATH COMPUTATION---------------------------#
@@ -140,18 +147,50 @@ if __name__ == '__main__':
 
             for i in path:
                 planimetry_obstacles[i[0], i[1]] = 255
-            plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
-            plt.show()
+            plt.imsave('results/path.png', planimetry_obstacles, cmap='gray', origin='lower')
+            #plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
+            #plt.show()
 
-            
-            for i in range(15,len(path), 15):
-                x = i[0]
-                y = i[1]
-                robot_wrapper.reach_absolute_point(x,y)
+            pose_x, pose_y, pose_yaw = robot_wrapper.robot.base.get_state('odom')
+            starting_pose = np.array([pose_x, pose_y, pose_yaw])
+
+            old_path = (0,0)
+
+            for i in range(30,len(path), 30):
+                if old_path == (0,0):
+                    y_new = path[i][1] / 100.0
+                else:
+                    y_new = (middle_position - path[i][1])/100.0
+
+                print('Considered coords: {}'.format(path[i]))
+                print('Old path: {}'.format(old_path))
+                print('Starting pose: {}'.format(starting_pose))
+
+                x_new = path[i][0]/100.0
+
+                print(x_new, y_new)
+
+                x_new -= (old_path[0] / 100.0)
+                y_new -= ((middle_position - old_path[1]) / 100.0)
+
+                print(x_new, y_new)
+                current_pose = starting_pose + np.array([x_new,y_new,0.0])
+                print('Current pose: {}'.format(current_pose))
+                coords = coordinate_projection(starting_pose, current_pose)
+                print('Final coordinates: {}'.format(coords))
+                #middle_position = middle_position/100.0
+                #print(middle_position - coords[0][1])
+                starting_pose = current_pose
+                old_path = path[i]
+                
+                if abs(coords[0][1]) < 0.1:
+                    coords[0][1] = 0.0
+                robot_wrapper.reach_relative_point(coords[0][0], coords[0][1])
                 #ATTENZIONE IN OTTICA DI IMPLEMENTAZIONE DI UN WHILE 
                 #CHE QUINDI PERMETTA DI NON DOVER RIAVVIARE OGNI VOLTA LO SCRIPT
                 #BISOGNA RIAGGIORNARE LA GLOBAL POSITION SETTANDOLA A ZERO
                 #CIO VA FATTO OGNI VOLTA CHE SI RIACQUISISCE
+            
             break
     
         else:
