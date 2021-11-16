@@ -6,7 +6,6 @@ from pyrobot import Robot
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.robot_wrapper import RobotWrapper
-#from functions_obstacles import compute_3d_point, compute_different_distance, compute_paths, construct_planimetry
 from utils.signal_detector import SignalDetector
 from utils.geometry import compute_3d_point, get_all_3d_points, get_single_3d_point, coordinate_projection
 from utils import parameters
