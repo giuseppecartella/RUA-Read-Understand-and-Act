@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from pyrobot import Robot
+#from pyrobot import Robot
 import numpy as np
 import cv2
 
 class RobotWrapper():
     def __init__(self):
-        self.robot = Robot('locobot')
+        #self.robot = Robot('locobot')
         self.camera = self.robot.camera
 
     def get_rgbd_frame(self):

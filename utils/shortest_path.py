@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from .node import Node
+import time
 
 
 class A_star():
@@ -22,7 +23,7 @@ class A_star():
         :param allow_diagonal_movement: do we allow diagonal steps in our path
         :return:
         """
-
+        start_time = time.time()
         # Create start and end node
         start_node = Node(None, start)
         start_node.g = start_node.h = start_node.f = 0
@@ -46,8 +47,14 @@ class A_star():
         if allow_diagonal_movement:
             adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1),)
 
-        # Loop until you find the end
-        while len(open_list) > 0:
+        # Loop until you find the end or when time is over
+        
+        while len(open_list) > 0  :
+            if (time.time() - start_time) > 2.0:
+
+                print((time.time() - start_time))
+                return self.return_path(current_node)
+            
             outer_iterations += 1
             
             # Get the current node

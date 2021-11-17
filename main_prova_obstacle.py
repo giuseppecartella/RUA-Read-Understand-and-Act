@@ -2,7 +2,7 @@
 import os
 import cv2
 import time
-from pyrobot import Robot
+#from pyrobot import Robot
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.robot_wrapper import RobotWrapper
@@ -52,9 +52,24 @@ def reach_signal(bot_moves, helper_detection, poi, d_img):
             print('Reaching next gap.')
             return True
 
-            
+def _inpaint_depth_img(depth_img):
+    result = depth_img.astype(np.single)
+    mask = np.where(result == 0, 255, 0).astype(np.ubyte)
+    kernel = np.ones((7,7))   
+    
+    #result = cv2.morphologyEx(result, cv2.MORPH_CLOSE, (7,7))
+    mask = cv2.dilate(mask, kernel, iterations=2)
+    result = cv2.inpaint(result, mask, 3, cv2.INPAINT_TELEA)
+    result = cv2.medianBlur(result, 5)
+    result = cv2.medianBlur(result, 5)
+    
+    #kernel = np.ones((7,7))
+    #mask = cv2.erode(mask, kernel)
+
+    return result
+        
 if __name__ == '__main__':
-    robot_wrapper = RobotWrapper()
+    #robot_wrapper = RobotWrapper()
 
     template = cv2.imread("utils/template.jpg")
     signal_detector = SignalDetector(template)
@@ -66,13 +81,13 @@ if __name__ == '__main__':
     found, x_c, y_c = False, None, None
     for i in range(MAX_ROTATIONS):
         print('{} Acquisition of the frame RGBD...'.format(i))
-        rgb_img, d_img = robot_wrapper.get_rgbd_frame()
+        #rgb_img, d_img = robot_wrapper.get_rgbd_frame()
+        #plt.imsave('results/rgb.jpg', d_img)
+        #plt.imsave('results/depth.png', d_img, cmap='gray')
         
-        plt.imsave('results/rgb.jpg', d_img)
-        plt.imsave('results/depth.png', d_img, cmap='gray')
-        #cv2.imwrite('results/depth.png', d_img * 255)
-        #rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
-        #d_img = np.load('test_images/obstacle3.npy')
+        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle2.png'), cv2.COLOR_BGR2RGB)
+        d_img = np.load('test_images/obstacle2.npy')
+        d_img = _inpaint_depth_img(d_img)
         #d_img = robot_wrapper._inpaint_depth_img(d_img)
 
         matrix_3d_points = np.round(get_all_3d_points(d_img) * 100).astype('int32') #transform from meters to cm
@@ -96,9 +111,6 @@ if __name__ == '__main__':
             mask = np.logical_and(coordinates_Z > (0.08 * 100), coordinates_Z < (parameters.ROBOT_HEIGHT * 100))
             mask = np.logical_and(mask, coordinates_X < signal_depth)
             plt.imsave('results/mask.png', mask, cmap='gray')
-            #plt.imshow(mask, cmap='gray')
-            #plt.show()
-
             
             obstacles = matrix_3d_points[mask==True]
             x_coords = obstacles[:,0]
@@ -120,37 +132,46 @@ if __name__ == '__main__':
             
             old_planimetry_dimension = planimetry_obstacles.shape
             planimetry_obstacles = planimetry_obstacles[:, boundary_left:boundary_right]
+            copy_planimetry_obstacles = planimetry_obstacles
             plt.imsave('results/pure_planimetry.png', planimetry_obstacles, cmap='gray', origin='lower')
             kernel = np.ones((3,3))
+            
+            # serve per togliere quei puntini bianchi ?? --> da controllare in lab 
+            planimetry_obstacles = cv2.medianBlur(planimetry_obstacles.astype('uint8'), 5)
+
             planimetry_obstacles = cv2.dilate(planimetry_obstacles, kernel, iterations=1)
-            planimetry_obstacles = cv2.GaussianBlur(planimetry_obstacles, (41,41), (31-1)/5)
+            planimetry_obstacles = cv2.GaussianBlur(planimetry_obstacles, (51,51), (51-1)/5) # filtro 51 sta almeno a 20 cm da ostacoli
             plt.imsave('results/dilated_blurredplanimetry.png', planimetry_obstacles, cmap='gray', origin='lower')
-            #plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
-            #plt.show()
+            plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
+            plt.show()
             
 
             #PATH COMPUTATION---------------------------#
+            
             middle_position = planimetry_obstacles.shape[1] // 2
+            
             #proporzione: y_vecchiosegnale:y_vecchia = ynuovasegnale:y_nuova
             y_signal = signal_3d_point[1] * planimetry_obstacles.shape[1] // old_planimetry_dimension[1]
 
             start = (0, middle_position)     
-            end = (signal_depth, middle_position - y_signal)
-            print(end)
+            end = (signal_depth -30, middle_position - y_signal)
+            print('Signal position: {}'.format(end))
+            
             a_star_alg = A_star()           
-            start_time = time.time()
-
-            path = a_star_alg.compute(planimetry_obstacles, start, end, False)
-            print("--- %s seconds ---" % (time.time() - start_time))
+           
+            planimetry_obstacles_aStar = np.where(planimetry_obstacles > 1.9,255, 0)
+            plt.imsave('results/astar.png', planimetry_obstacles_aStar, cmap='gray', origin='lower')
+            
+            path = a_star_alg.compute(planimetry_obstacles_aStar, start, end, False)
             print(path)
 
             for i in path:
-                planimetry_obstacles[i[0], i[1]] = 255
-            plt.imsave('results/path.png', planimetry_obstacles, cmap='gray', origin='lower')
-            #plt.matshow(planimetry_obstacles, cmap='gray', origin='lower')
-            #plt.show()
+                copy_planimetry_obstacles[i[0], i[1]] = 255
+            plt.imsave('results/path.png', copy_planimetry_obstacles, cmap='gray', origin='lower')
+            plt.matshow(copy_planimetry_obstacles, cmap='gray', origin='lower')
+            plt.show()
 
-            pose_x, pose_y, pose_yaw = robot_wrapper.robot.base.get_state('odom')
+            """pose_x, pose_y, pose_yaw = robot_wrapper.robot.base.get_state('odom')
             starting_pose = np.array([pose_x, pose_y, pose_yaw])
 
             old_path = (0,0)
@@ -189,11 +210,11 @@ if __name__ == '__main__':
                 #CHE QUINDI PERMETTA DI NON DOVER RIAVVIARE OGNI VOLTA LO SCRIPT
                 #BISOGNA RIAGGIORNARE LA GLOBAL POSITION SETTANDOLA A ZERO
                 #CIO VA FATTO OGNI VOLTA CHE SI RIACQUISISCE
-            
+            """
             break
     
-        else:
-            robot_wrapper.turn(ANGLES_RADIANT)
+        #else:
+            #robot_wrapper.turn(ANGLES_RADIANT)
             
     """
     if found:
