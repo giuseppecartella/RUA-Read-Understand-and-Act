@@ -12,6 +12,19 @@ class PathPlanner():
             current = current.parent
         return path[::-1]  # Return reversed path
 
+    def shrink_path(self, paths):
+        THRESHOLD = 5
+        point = paths[0]
+        shrink_paths = []
+        for i in range(1, len(paths)):
+            if abs(point[0] - paths[i][0]) > THRESHOLD and abs(point[1] - paths[i][1]) > THRESHOLD:
+                shrink_paths.append(paths[i])
+                point = paths[i]
+
+        shrink_paths.append(paths[-1])
+
+        return shrink_paths
+
 
     def compute(self, maze, start, end, allow_diagonal_movement = False):
         """

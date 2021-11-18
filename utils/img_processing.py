@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import cv2
+from utils import project_parameters as params
 
 class ImgProcessing():
     def __init__(self):
@@ -21,7 +22,9 @@ class ImgProcessing():
         # serve per togliere quei puntini bianchi ?? --> da controllare in lab 
         planimetry = cv2.medianBlur(planimetry.astype(np.ubyte), 5)
         planimetry = cv2.dilate(planimetry, kernel, iterations=1)
-        planimetry = cv2.GaussianBlur(planimetry, (51,51), (51-1)/5) # filtro 51 sta almeno a 20 cm da ostacoli
+        planimetry = cv2.GaussianBlur(planimetry, params.GAUSSIAN_FILTER_SIZE, (params.GAUSSIAN_FILTER_SIZE[0]-1)/5) # filtro 51 sta almeno a 20 cm da ostacoli
+        planimetry = np.where(planimetry > 1.9, 255, 0)
+        
         return planimetry
 
     def quantize(self, planimetry, kernel, threshold_min):

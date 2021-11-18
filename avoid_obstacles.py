@@ -7,8 +7,8 @@ from utils.signal_detector import SignalDetector
 from utils.img_processing import ImgProcessing
 from utils.plotter import Plotter
 from utils.geometry_transformation import GeometryTransformation
-from utils.path_planner import PathPlanner
 from utils.map_constructor import MapConstructor
+from utils.path_planner import PathPlanner
 
 
 def main():
@@ -63,23 +63,19 @@ def main():
     #--------------------------MAP CONSTRUCTION--------------------------------#
     #For Locobot Y is positive to left.
     #--------------------------------------------------------------------------#
-    if debug == "True":
-        pass
-        #plotter.save_image(rgb_img, 'rgb_image', False)
-        #plotter.save_image(d_img, 'depth_image', True)
-        #plotter.save_planimetry(planimetry, robot_coords, signal_coords)
-    
     planimetry, robot_coords, signal_coords = map_constructor.construct_planimetry(matrix_3d_points, signal_3d_point)
+    plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'raw_planimetry')
     planimetry = img_processing.process_planimetry(planimetry)
-    plotter.save_planimetry(planimetry, robot_coords, signal_coords , 'planimetry')
-    quantized_planimetry = img_processing.quantize(planimetry, params.QUANTIZATION_WINDOW_SIZE, params.THRESHOLD)
+
+    if debug == "True":
+        plotter.save_image(rgb_img, 'rgb_image', False)
+        plotter.save_image(d_img, 'depth_image', True)
+        plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'processed_planimetry')
+    #quantized_planimetry = img_processing.quantize(planimetry, params.QUANTIZATION_WINDOW_SIZE, params.THRESHOLD)
+    #Ricordarsi np.where con costante 1.9 da commentare nel caso in cui vogliamo provare con quantizzazione
     
-    
-    #Quantizazion phase
- 
-    start = robot_coords
-    end = (signal_coords[0]- 30, signal_coords[1])
-    #Same thing with quantized coordinates
+
+    #Quantization part
     """start_quantized = img_processing.from_init_to_quantized_space(start, params.QUANTIZATION_WINDOW_SIZE)
     end_quantized = img_processing.from_init_to_quantized_space(end, params.QUANTIZATION_WINDOW_SIZE)
     #plotter.save_planimetry(quantized_planimetry, start_quantized, end_quantized, 'quantized_img')
@@ -96,27 +92,26 @@ def main():
     #plotter.save_planimetry(quantized_planimetry, start_quantized, end_quantized, 'path_img_quantized')
     """
     #--------------------------------------------------------------------------#
-   
-    planimetry_obstacles_aStar = np.where(planimetry > 1.9,255, 0)
-    #plotter.save_planimetry(planimetry_obstacles_aStar, start, end, 'path_img_sara_dilated')   
-    
-    path = path_planner.compute(planimetry_obstacles_aStar, start, end, False)
+
+    #-----------------------------PATH DEFINITION------------------------------#
+    start_point = robot_coords
+    end_point = (signal_coords[0] - 15, signal_coords[1])
+    path = path_planner.compute(planimetry, start_point, end_point, False)
     print(path)
+    path = path_planner.shrink_path(path)# To debug yet
 
-    for i in path:
-        planimetry[i[0], i[1]] = 255
-    plotter.save_planimetry(planimetry, start, end, 'path_img_sara')
-    
-    
     if debug == "True":
-        pass
-        #plotter.save_image(rgb_img, 'rgb_image', False)
-        #plotter.save_image(d_img, 'depth_image', True)
-        #plotter.save_planimetry(planimetry, robot_coords, signal_coords)
+        for i in path:
+            planimetry[i[0], i[1]] = 100
+        plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory')
+    #--------------------------------------------------------------------------#
+
+    #-----------------------------FOLLOW TRAJECTORY---------------------------#
+    if lab_mode == "True":
+        robot_wrapper.follow_trajectory(path, robot_coords)
 
 
-    #PATH COMPUTATION---------------------------#
-
+    """
     pose_x, pose_y, pose_yaw = robot_wrapper.robot.base.get_state('odom')
     starting_pose = np.array([pose_x, pose_y, pose_yaw])
     middle_position = robot_coords[1]
@@ -143,23 +138,21 @@ def main():
         coords = gt.coordinate_projection(starting_pose, current_pose)
         print('Final coordinates: {}'.format(coords))
      
-        starting_pose = current_pose
-       
-            
+        starting_pose = current_pose     
         old_path = path[i]
         
         if abs(coords[0][1]) < 0.1:
             coords[0][1] = 0.0
     
-
         robot_wrapper.reach_relative_point(coords[0][0], coords[0][1])
 
         # PENSARE A MOVIMENTI PIU FLUIDI, SOLO QUANDO CAMBIA LA Y O LA X
-
         #ATTENZIONE IN OTTICA DI IMPLEMENTAZIONE DI UN WHILE 
         #CHE QUINDI PERMETTA DI NON DOVER RIAVVIARE OGNI VOLTA LO SCRIPT
         #BISOGNA RIAGGIORNARE LA GLOBAL POSITION SETTANDOLA A ZERO
         #CIO VA FATTO OGNI VOLTA CHE SI RIACQUISISCE
+
+    """
     
             
 

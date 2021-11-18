@@ -78,14 +78,10 @@ class MapConstructor():
         # .R    .S          # .S   .R
         # R-S <0                R-S >0
         # NEW_SEGNALE = R_NEW - DIFFERENCE 
-        # 
-
-        # 
         y_signal = robot_coords[1] - old_y_difference 
         return (signal_coords[0], y_signal)
 
     def _recompute_robot_coords(self, robot_bound_distance, planimetry_dim):
         # BL    R ___10CM ___BR
-
         y_robot = planimetry_dim + robot_bound_distance 
         return (0, y_robot)
