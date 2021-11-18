@@ -1,0 +1,6 @@
+* percorso se su stessa linea non fare passetti
+* while non trova segnale :
+    * esplorazione
+    * ampliamento planimetria 
+* while trova il segnale ma servono piu foto/step
+* check con tutti e 3 se ha senso aggiungere margini

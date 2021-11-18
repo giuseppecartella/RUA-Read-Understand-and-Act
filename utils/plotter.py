@@ -14,8 +14,8 @@ class Plotter():
         else:
             plt.imsave(filename, img)
 
-    def save_planimetry(self, planimetry, robot_coords, signal_coords):
-        filename = os.path.join(self.root_directory, 'planimetry.png')
+    def save_planimetry(self, planimetry, robot_coords, signal_coords, title):
+        filename = os.path.join(self.root_directory, title +'.png')
         plt.matshow(planimetry, cmap='gray', origin='lower')
         plt.scatter(robot_coords[1], robot_coords[0], c='r')
         plt.scatter(signal_coords[1], signal_coords[0] - 1, c='y') #-1 in order to obtain a better plot
