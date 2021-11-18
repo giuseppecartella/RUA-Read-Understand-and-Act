@@ -2,13 +2,17 @@ import numpy as np
 import cv2
 
 class SignalDetector():
-    def __init__(self, window_size=16):
+    def __init__(self, window_size=16, lab_mode="False"):
+        self.lab_mode = lab_mode
         self.WINDOW_SIZE = window_size
         self.template = cv2.cvtColor(cv2.imread('utils/template.jpg'), cv2.COLOR_BGR2RGB)
 
     def _compute_sift_imgs(self, img1, img2):
-        #sift = cv2.xfeatures2d.SIFT_create() #needed for Python 2
-        sift = cv2.SIFT_create()
+        if self.lab_mode == "True":
+            sift = cv2.xfeatures2d.SIFT_create()
+        else:
+            sift = cv2.SIFT_create()
+        
         kp1, des1 = sift.detectAndCompute(img1, None)
         kp2, des2 = sift.detectAndCompute(img2, None)
         return kp1, kp2, des1, des2
