@@ -33,7 +33,10 @@ class RobotWrapper():
 
 
     def follow_trajectory(self, trajectory, robot_coords):
+        curr_coords = self.robot.base.base_state.state.update((0,0,0))
         pose_x, pose_y, pose_yaw = self.robot.base.get_state('odom')
+        print('Considered curr_coords: {}'.format(curr_coords))
+        print('Pos coords: {}, {}'.format(pose_x, pose_y))
         starting_pose = np.array([pose_x, pose_y, pose_yaw])
         y_robot = robot_coords[1]
 
@@ -59,6 +62,7 @@ class RobotWrapper():
 
             gt = GeometryTransformation()
             coords = gt.coordinate_projection(starting_pose, current_pose)
+           
             print('Final coordinates: {}'.format(coords))
         
             starting_pose = current_pose     
