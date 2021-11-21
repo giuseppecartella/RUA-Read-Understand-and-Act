@@ -35,126 +35,92 @@ def main():
     gt = GeometryTransformation()
     plotter = Plotter('results')
     #--------------------------------------------------------------------------#
-    
-    #-------------------------------SIGNAL DETECTION---------------------------#
-    # invertire gli if --> se in lab_mode fai while per routarsi o cercare il segnale
-    if lab_mode is True:
-        rgb_img, d_img = robot_wrapper.get_rgbd_frame()
-    else:
-        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle5.png'), cv2.COLOR_BGR2RGB)
-        d_img = np.load('test_images/obstacle5.npy')
 
-    found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
-    
-    #This condition must be removed when exploration phase is implemented
-    if not found:
-        #robot_wrapper.turn(params.ANGLES_RADIANT)
-        print('Signal not found. Impossibile to continue.')
-        return -1
-
-    d_img = img_processing.inpaint_depth_img(d_img)
-    #--------------------------------------------------------------------------#
-
-    #------------------------GEOMETRIC TRANSFORMATIONS-------------------------#
-    matrix_3d_points = gt.get_all_3d_points(d_img)
-    signal_3d_point = gt.get_single_3d_point(d_img, y_c, x_c)
-    #--------------------------------------------------------------------------#
-
-    #--------------------------MAP CONSTRUCTION--------------------------------#
-    #For Locobot Y is positive to left.
-    #--------------------------------------------------------------------------#
-    planimetry, robot_coords, signal_coords = map_constructor.construct_planimetry(matrix_3d_points, signal_3d_point)
-    plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'raw_planimetry')
-    planimetry = img_processing.process_planimetry(planimetry)
-
-    if debug == "True":
-        plotter.save_image(rgb_img, 'rgb_image', False)
-        plotter.save_image(d_img, 'depth_image', True)
-        plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'processed_planimetry')
-    #quantized_planimetry = img_processing.quantize(planimetry, params.QUANTIZATION_WINDOW_SIZE, params.THRESHOLD)
-    #Ricordarsi np.where con costante 1.9 da commentare nel caso in cui vogliamo provare con quantizzazione
-    
-
-    #Quantization part
-    """start_quantized = img_processing.from_init_to_quantized_space(start, params.QUANTIZATION_WINDOW_SIZE)
-    end_quantized = img_processing.from_init_to_quantized_space(end, params.QUANTIZATION_WINDOW_SIZE)
-    #plotter.save_planimetry(quantized_planimetry, start_quantized, end_quantized, 'quantized_img')
-    
-    path = path_planner.compute(quantized_planimetry, start_quantized, end_quantized, False)
-    
-    for i in path:
-        quantized_planimetry[i[0], i[1]] = 255
-        coord = img_processing.from_quantize_space_to_init(i, params.QUANTIZATION_WINDOW_SIZE)
-        planimetry[coord[0], coord[1]] = 255
-        
-    
-    plotter.save_planimetry(planimetry, start, end, 'path_img_nicholas')
-    #plotter.save_planimetry(quantized_planimetry, start_quantized, end_quantized, 'path_img_quantized')
-    """
-    #--------------------------------------------------------------------------#
-
-    #-----------------------------PATH DEFINITION------------------------------#
-    start_point = robot_coords
-    end_point = (signal_coords[0] - 15, signal_coords[1])
-    path = path_planner.compute(planimetry, start_point, end_point, False)
-    print(path)
-    path = path_planner.shrink_path(path)# To debug yet
-
-    if debug == "True":
-        for i in path:
-            planimetry[i[0], i[1]] = 100
-        plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory')
-    #--------------------------------------------------------------------------#
-
-    #-----------------------------FOLLOW TRAJECTORY---------------------------#
-    if lab_mode == "True":
-        robot_wrapper.follow_trajectory(path, robot_coords)
-
-
-    """
-    pose_x, pose_y, pose_yaw = robot_wrapper.robot.base.get_state('odom')
-    starting_pose = np.array([pose_x, pose_y, pose_yaw])
-    middle_position = robot_coords[1]
-
-    old_path = (0,0)
-
-    for i in range(30,len(path), 30):
-        if old_path == (0,0):
-            y_new = path[i][1] / 100.0
+    while True:
+        #-------------------------------SIGNAL DETECTION---------------------------#
+        # invertire gli if --> se in lab_mode fai while per routarsi o cercare il segnale
+        if lab_mode is True:
+            rgb_img, d_img = robot_wrapper.get_rgbd_frame()
         else:
-            y_new = (middle_position - path[i][1])/100.0
+            rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle5.png'), cv2.COLOR_BGR2RGB)
+            d_img = np.load('test_images/obstacle5.npy')
 
-        print('Considered coords: {}'.format(path[i]))
-        print('Old path: {}'.format(old_path))
-        print('Starting pose: {}'.format(starting_pose))
-
-        x_new = path[i][0]/100.0
-        x_new -= (old_path[0] / 100.0)
-        y_new -= ((middle_position - old_path[1]) / 100.0)
-
-        print(x_new, y_new)
-        current_pose = starting_pose + np.array([x_new,y_new,0.0])
-        print('Current pose: {}'.format(current_pose))
-        coords = gt.coordinate_projection(starting_pose, current_pose)
-        print('Final coordinates: {}'.format(coords))
-     
-        starting_pose = current_pose     
-        old_path = path[i]
+        found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
         
-        if abs(coords[0][1]) < 0.1:
-            coords[0][1] = 0.0
-    
-        robot_wrapper.reach_relative_point(coords[0][0], coords[0][1])
+        #This condition must be removed when exploration phase is implemented
+        if not found:
+            print('Signal not found. Impossibile to continue.')
+            return -1
 
-        # PENSARE A MOVIMENTI PIU FLUIDI, SOLO QUANDO CAMBIA LA Y O LA X
-        #ATTENZIONE IN OTTICA DI IMPLEMENTAZIONE DI UN WHILE 
-        #CHE QUINDI PERMETTA DI NON DOVER RIAVVIARE OGNI VOLTA LO SCRIPT
-        #BISOGNA RIAGGIORNARE LA GLOBAL POSITION SETTANDOLA A ZERO
-        #CIO VA FATTO OGNI VOLTA CHE SI RIACQUISISCE
+        d_img = img_processing.inpaint_depth_img(d_img)
+        #--------------------------------------------------------------------------#
 
-    """
-    
+        #------------------------GEOMETRIC TRANSFORMATIONS-------------------------#
+        matrix_3d_points = gt.get_all_3d_points(d_img)
+        signal_3d_point = gt.get_single_3d_point(d_img, y_c, x_c)
+
+        x_signal = signal_3d_point[0]
+        y_signal = signal_3d_point[1]
+        signal_distance = np.sqrt((x_signal - 0)**2 + (y_signal - 0)**2) #consider relative distance from robot
+
+        if signal_distance <= params.STOP_DISTANCE_LIMIT:
+            break
+        #--------------------------------------------------------------------------#
+
+        #--------------------------MAP CONSTRUCTION--------------------------------#
+        #For Locobot Y is positive to left.
+        planimetry, robot_coords, signal_coords = map_constructor.construct_planimetry(matrix_3d_points, signal_3d_point)
+        if debug == "True":
+            plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'raw_planimetry')
+
+        planimetry = img_processing.process_planimetry(planimetry)
+
+        if debug == "True":
+            plotter.save_image(rgb_img, 'rgb_image', False)
+            plotter.save_image(d_img, 'depth_image', True)
+            plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'processed_planimetry')
+
+
+        #quantized_planimetry = img_processing.quantize(planimetry, params.QUANTIZATION_WINDOW_SIZE, params.THRESHOLD)
+        #Ricordarsi np.where con costante 1.9 da commentare nel caso in cui vogliamo provare con quantizzazione
+
+        #Quantization part
+        """start_quantized = img_processing.from_init_to_quantized_space(start, params.QUANTIZATION_WINDOW_SIZE)
+        end_quantized = img_processing.from_init_to_quantized_space(end, params.QUANTIZATION_WINDOW_SIZE)
+        #plotter.save_planimetry(quantized_planimetry, start_quantized, end_quantized, 'quantized_img')
+        
+        path = path_planner.compute(quantized_planimetry, start_quantized, end_quantized, False)
+        
+        for i in path:
+            quantized_planimetry[i[0], i[1]] = 255
+            coord = img_processing.from_quantize_space_to_init(i, params.QUANTIZATION_WINDOW_SIZE)
+            planimetry[coord[0], coord[1]] = 255
             
+        
+        plotter.save_planimetry(planimetry, start, end, 'path_img_nicholas')
+        #plotter.save_planimetry(quantized_planimetry, start_quantized, end_quantized, 'path_img_quantized')
+        """
+        #--------------------------------------------------------------------------#
+
+        #-----------------------------PATH DEFINITION------------------------------#
+        start_point = robot_coords
+        end_point = (signal_coords[0] - 15, signal_coords[1])
+        path = path_planner.compute(planimetry, start_point, end_point, False)
+        print(path)
+        path = path_planner.shrink_path(path)# To debug yet
+
+        if debug == "True":
+            for i in path:
+                planimetry[i[0], i[1]] = 100
+            plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory')
+        #--------------------------------------------------------------------------#
+
+        #-----------------------------FOLLOW TRAJECTORY---------------------------#
+        if lab_mode == "True":
+            robot_wrapper.follow_trajectory(path, robot_coords)
+    
+
+    print('Arrived to destination!')
 
 if __name__ == '__main__':
     main()

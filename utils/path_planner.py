@@ -93,7 +93,7 @@ class PathPlanner():
 
             # Found the goal
             if current_node == end_node:
-                print('Sono arrivato a destinazioneeeee')
+                print('Algorithm found a path to destination!')
                 return self.return_path(current_node)
 
             # Generate children
