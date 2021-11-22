@@ -24,7 +24,6 @@ class PathPlanner():
 
         shrink_paths.append(paths[-1])
 
-        print(shrink_paths)
         if(len(shrink_paths) >= 3):
             shrink_paths = self._avoid_diagonal(shrink_paths)
 
@@ -48,7 +47,7 @@ class PathPlanner():
             angle_A = int(np.degrees(np.arctan( (A[1] - old[1]) / (A[0] - old[0]))))
             angle_B = int(np.degrees(np.arctan( (B[1] - A[1]) / (B[0] - A[0]))))
             angle_C = int(np.degrees(np.arctan( (C[1] - B[1]) / (C[0] - B[0]))))
-            print(f"A = {A}, B = {B}, C = {paths[i]} ||| angle_A = {angle_A}, angle_B = {angle_B}, angle_C = {angle_C}\n")
+            
             if abs(angle_A - angle_C) > THRESHOLD:
                 shrink_paths.append(A)
 
