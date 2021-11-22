@@ -21,8 +21,9 @@ class PathPlanner():
             if abs(point[0] - paths[i][0]) > THRESHOLD and abs(point[1] - paths[i][1]) > THRESHOLD:
                 shrink_paths.append(paths[i])
                 point = paths[i]
-
-        shrink_paths.append(paths[-1])
+        
+        if paths[-1] not in shrink_paths:
+            shrink_paths.append(paths[-1])
 
         if(len(shrink_paths) >= 3):
             shrink_paths = self._avoid_diagonal(shrink_paths)
