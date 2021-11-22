@@ -37,13 +37,14 @@ def main():
     #--------------------------------------------------------------------------#
 
     while True:
+        print('entrato nel whileee')
         #-------------------------------SIGNAL DETECTION---------------------------#
         # invertire gli if --> se in lab_mode fai while per routarsi o cercare il segnale
         if lab_mode is True:
             rgb_img, d_img = robot_wrapper.get_rgbd_frame()
         else:
-            rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle5.png'), cv2.COLOR_BGR2RGB)
-            d_img = np.load('test_images/obstacle5.npy')
+            rgb_img = cv2.cvtColor(cv2.imread('test_images/near.png'), cv2.COLOR_BGR2RGB)
+            d_img = np.load('test_images/near.npy')
 
         found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
         
@@ -106,20 +107,25 @@ def main():
         start_point = robot_coords
         end_point = (signal_coords[0] - 15, signal_coords[1])
         path = path_planner.compute(planimetry, start_point, end_point, False)
-        print(path)
-        path = path_planner.shrink_path(path)# To debug yet
-
         if debug == "True":
-            for i in path:
-                planimetry[i[0], i[1]] = 100
-            plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory')
+            plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory', coords=path)
+
+        path = path_planner.shrink_path(path)# To debug yet
+        if debug == "True":
+            plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_shrinked_path', coords=path)
+
         #--------------------------------------------------------------------------#
 
         #-----------------------------FOLLOW TRAJECTORY---------------------------#
         if lab_mode == "True":
             robot_wrapper.follow_trajectory(path, robot_coords)
-    
 
+        """
+        codice da testare per capire se funziona l'aggiornamento della global position
+        if lab_mode == "True":
+            robot_wrapper.follow_trajectory_with_update(path, robot_coords) #global position is updated inside the function
+        """
+    
     print('Arrived to destination!')
 
 if __name__ == '__main__':

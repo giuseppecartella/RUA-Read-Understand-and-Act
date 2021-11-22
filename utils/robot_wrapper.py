@@ -19,23 +19,23 @@ class RobotWrapper():
     def get_intrinsic_matrix(self):
         return self.camera.get_intrinsics()
 
-    def reach_relative_point(self, x, y):
-        target_position = [x, y, 0.0]
+    def reach_relative_point(self, x, y, theta=0.0):
+        target_position = [x, y, theta]
         self.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
 
-    def reach_absolute_point(self, x, y):
-        target_position = [x, y, 0.0]
+    def reach_absolute_point(self, x, y, theta=0.0):
+        target_position = [x, y, theta]
         self.robot.base.go_to_absolute(target_position, smooth=False, close_loop=True)
 
     def turn(self, angle_radiant):
         target_position = [0.0, 0.0, angle_radiant]
         self.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
 
+    def _reset_robot_global_position(self):
+        self.robot.base.base_state.state.update((0,0,0))
 
-    def follow_trajectory(self, trajectory, robot_coords):
-        curr_coords = self.robot.base.base_state.state.update((0,0,0)) #to check in lab if it really works as intended
+    def follow_trajectory(self, trajectory, robot_coords):    
         pose_x, pose_y, pose_yaw = self.robot.base.get_state('odom')
-        print('Considered curr_coords: {}'.format(curr_coords))
         print('Pos coords: {}, {}'.format(pose_x, pose_y))
         starting_pose = np.array([pose_x, pose_y, pose_yaw])
         y_robot = robot_coords[1]
@@ -72,3 +72,24 @@ class RobotWrapper():
                 coords[0][1] = 0.0
         
             self.reach_relative_point(coords[0][0], coords[0][1])
+
+
+    def follow_trajectory_with_update(self, trajectory, old_robot_coords):
+        """
+        This function assumes that input trajectory contains points which coordinates 
+        refer to a global planimetry
+        """
+        #convert list of tuples to numpy array
+        trajectory = np.array(trajectory)
+        self._reset_robot_global_position() #reset global robot position to (0,0)
+
+        #update y_coordinates to fit with the new reference system
+        trajectory[1] -= old_robot_coords[1]
+
+        #now we have the new x and y coordinates. we can follow the trajectory
+        #we compute theta angle in order to avoid robot repositioning each time
+        for i in range(len(trajectory)):
+            x = trajectory[i,0]
+            y = trajectory[i,1]
+            theta = np.atan2(y,x)
+            self.reach_absolute_point(x, 0.0, theta) #passing theta instead of x,y should avoid robot repositioning!

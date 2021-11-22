@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import matplotlib.pyplot as plt
-from numpy.lib.function_base import sinc
+import numpy as np
 
 class Plotter():
     def __init__(self, root_directory):
@@ -20,10 +20,8 @@ class Plotter():
         plt.scatter(robot_coords[1], robot_coords[0], c='r')
         plt.scatter(signal_coords[1], signal_coords[0] - 1, c='y') #-1 in order to obtain a better plot
         if coords is not None:
-            x_coords = []
-            y_coords = []
-            for point in coords:
-                x_coords.append(point[0])
-                y_coords.append(point[1])
-            plt.scatter(x_coords, y_coords, c='b')
+            coords = np.array(coords)
+            x_coords = coords[:,0]
+            y_coords = coords[:,1]
+            plt.scatter(y_coords, x_coords, c='b', marker='.')
         plt.savefig(filename)

@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from . import project_parameters as params
 
 class SignalDetector():
     def __init__(self, window_size=16, lab_mode="False"):
@@ -44,7 +45,7 @@ class SignalDetector():
         # Apply ratio test
         good, good_m = self._sift_ratio(matches)
 
-        if len(good) < 10:
+        if len(good) < params.SIFT_MATCH_THRESHOLD:
             return False, None, None
         else:
             coords = [kp2[good_m[i].trainIdx].pt for i in range(len(good))]
