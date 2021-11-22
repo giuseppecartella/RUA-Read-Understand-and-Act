@@ -2,6 +2,7 @@
 import numpy as np
 from .node import Node
 import time
+import copy
 
 class PathPlanner():
     def return_path(self, current_node):
@@ -22,6 +23,48 @@ class PathPlanner():
                 point = paths[i]
 
         shrink_paths.append(paths[-1])
+
+        print(shrink_paths)
+        if(len(shrink_paths) >= 3):
+            shrink_paths = self._avoid_diagonal(shrink_paths)
+
+        return shrink_paths
+    
+    def _avoid_diagonal(self, paths):
+        THRESHOLD = 2
+        '''
+        Just to understand: Example of diagonal and then forward
+            C
+            B
+        A
+        '''
+        A = paths[0]
+        B = paths[1]
+        old = [0, 0]
+        shrink_paths = []
+
+        for i in range(2, len(paths)):
+            C = paths[i]
+            angle_A = int(np.degrees(np.arctan( (A[1] - old[1]) / (A[0] - old[0]))))
+            angle_B = int(np.degrees(np.arctan( (B[1] - A[1]) / (B[0] - A[0]))))
+            angle_C = int(np.degrees(np.arctan( (C[1] - B[1]) / (C[0] - B[0]))))
+            print(f"A = {A}, B = {B}, C = {paths[i]} ||| angle_A = {angle_A}, angle_B = {angle_B}, angle_C = {angle_C}\n")
+            if abs(angle_A - angle_C) > THRESHOLD:
+                shrink_paths.append(A)
+
+            old = A
+            A = B
+            B = C
+
+        #For the last three couple 
+        if abs(angle_A - angle_B) < THRESHOLD:
+            shrink_paths.remove(old)
+            shrink_paths.append(A)
+        
+        if abs(angle_B - angle_C) < THRESHOLD:
+            shrink_paths.remove(A)
+        
+        shrink_paths.append(B)
 
         return shrink_paths
 
