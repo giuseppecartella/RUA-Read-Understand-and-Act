@@ -1,42 +1,69 @@
 import numpy as np
 
-paths = [(0, 120), (1, 120), (2, 120), (3, 120), (4, 120), (5, 120), (6, 120), (7, 120), (8, 120), (9, 120), (10, 120), (11, 120), (12, 120), (13, 120), (14, 120), (15, 120), (16, 120), (17, 120), (18, 120), (19, 120), (20, 120), (21, 120), (22, 120), (23, 120), (24, 120), (25, 120), (26, 120), (27, 120), (28, 120), (29, 120), (30, 120), (31, 120), (32, 120), (33, 120), (34, 120), (35, 120), (36, 120), (37, 120), (38, 120), (39, 120), (40, 120), (41, 120), 
-(42, 120), (43, 120), (44, 120), (45, 120), (46, 120), (47, 120), (48, 120), (49, 120), (50, 120), (51, 120), (52, 120), (53, 120), (54, 120), (55, 120), (56, 120), (57, 120), (58, 120), (59, 120), (60, 120), (61, 120), (62, 120), (63, 120), (64, 120), (65, 120), (66, 120), (67, 120), (68, 120), (69, 
-120), (70, 120), (71, 120), (72, 120), (73, 120), (74, 120), (75, 120), (76, 120), (77, 120), (78, 120), (79, 120), (80, 120), (81, 120), (82, 120), (83, 120), (84, 120), (85, 120), (86, 120), (87, 120), (88, 120), (89, 120), (90, 120), (91, 120), (92, 120), (93, 120), (94, 120), (95, 120), (96, 120), (97, 120), (98, 120), (99, 120), (100, 120), (101, 120), (102, 120), (103, 120), (104, 120), (105, 120), (106, 120), (107, 120), (108, 120), (109, 120), (110, 120), (111, 120), (112, 120), (113, 120), (114, 120), (115, 120), (116, 120), (117, 120), (118, 120), (119, 120), (120, 120), (121, 120), (122, 120), (123, 120), (124, 120), (125, 120), (126, 120), (127, 120), (128, 120), (129, 120), (130, 120), (131, 120), (132, 120), (133, 120), (134, 120), (134, 119), (134, 118), (134, 117), (134, 116), (134, 115), (134, 114), (134, 113), (134, 112), (134, 111), (134, 110), (134, 109), (134, 108), (135, 
-108), (135, 107), (135, 106), (135, 105), (135, 104), (135, 103), (136, 103), (136, 102), (136, 101), (136, 100), (137, 100), (137, 99), (137, 98), (138, 98), (138, 97), (138, 96), (138, 95), (139, 95), (139, 94), (140, 94), (140, 93), (140, 92), (141, 92), (141, 91), (141, 90), (142, 90), (142, 89), 
-(143, 89), (143, 88), (143, 87), (144, 87), (144, 86), (145, 86), (145, 85), (146, 85), (146, 84), (147, 84), (147, 83), (148, 83), (148, 82), (149, 82), (150, 82), (150, 81)]
+def _isDiagonal(paths):
+        THRESHOLD = 2
 
-"""
-paths = np.array([[1,30],
-                  [2,30],
-                  [3,30],
-                  [4,30],
-                  [5,30],
+        A = paths[0]
+        B = paths[1]
+        C = paths[2]
 
-                  [5,31],
-                  [5,32],
-                  [5,33],
-                  [5,34],
-                  [5,35],
+        angle_AB = int(np.degrees(np.arctan( (B[1] - A[1]) / (B[0] - A[0] + 0.00001) )))
+        angle_BC = int(np.degrees(np.arctan( (C[1] - B[1]) / (C[0] - B[0] + 0.00001) )))
 
-                  [5,36],
-                  [6,36],
-                  [7,36],
-                  [8,36],
-                  [9,36],
-                  [10,36]])
-"""
+        return abs(angle_AB - angle_BC) < THRESHOLD
 
-#Questo presuppone che non andiamo indietro nel percorso ma continuamo ad andare in avanti
-THRESHOLD = 1
-point = paths[0]
-shrink_paths = []
-for i in range(1, len(paths)):
-    if abs(point[0] - paths[i][0]) > THRESHOLD and abs(point[1] - paths[i][1]) > THRESHOLD:
-        shrink_paths.append(paths[i])
-        point = paths[i]
+def _avoid_diagonal(paths):
+        shrink_paths = []
+        i = 0
+        was_diagonal = False    
+        first_point = None      #First diagonal's point
+        
+        while i < len(paths) - 2:
+            is_diagonal = _isDiagonal(paths[i:i+3])
+            
+            if is_diagonal == True:
+                if first_point is None:
+                    first_point = paths[i]
+                last_point = paths[i+2]
+                was_diagonal = True
+            elif (not is_diagonal) and (was_diagonal == True):
+                shrink_paths.append(first_point)
+                shrink_paths.append(last_point)
+                was_diagonal = False
+                first_point = None
+                #i = i + 1
+            else:
+                shrink_paths.append(paths[i])
+            i = i + 1
+        
+        # ---- To HANDLE LAST TRIPLET ----#
+        if was_diagonal:
+            shrink_paths.append(paths[-1])
+        else:
+            if paths[0] not in shrink_paths:
+                shrink_paths.insert(0, paths[0])
+            
+            if (first_point is not None) and (first_point not in shrink_paths):
+                shrink_paths.append(first_point)
+            else:
+                shrink_paths.append(paths[-2])
+            
+            if paths[-1] not in shrink_paths:
+                shrink_paths.append(paths[-1])
+        
+        shrink_paths = np.array(shrink_paths)
+        shrink_paths = np.unique(shrink_paths, axis=0)
 
-shrink_paths.append(paths[-1])
+        return shrink_paths
 
 
-print('ciao')
+
+
+paths = [(0,50),(10,50),(15,55),(20,60), (20,80), (20,100), (30,80)] #alto, diagonale in alto verso destra, poi tutto a destra
+#paths = [(0,50),(10,50),(20,60), (30,70), (30,80),(30,90), (30,100)]
+#paths = [(0,50),(10,50),(20,50),(50,50), (60,50), (100,100), (40,80)] #dritto poi tutto a destra
+path = _avoid_diagonal(paths)
+print(path)
+
+
+

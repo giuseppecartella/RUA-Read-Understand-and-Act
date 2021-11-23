@@ -61,22 +61,28 @@ class PathPlanner():
                 shrink_paths.append(last_point)
                 was_diagonal = False
                 first_point = None
-                i = i + 1
+                #i = i + 1
             else:
                 shrink_paths.append(paths[i])
             i = i + 1
         
         # ---- To HANDLE LAST TRIPLET ----#
-        if paths[0] not in shrink_paths:
-            shrink_paths.insert(0, paths[0])
-        
-        if (first_point is not None) and (first_point not in shrink_paths):
-            shrink_paths.append(first_point)
-        else:
-            shrink_paths.append(paths[-2])
-        
-        if paths[-1] not in shrink_paths:
+        if was_diagonal:
             shrink_paths.append(paths[-1])
+        else:
+            if paths[0] not in shrink_paths:
+                shrink_paths.insert(0, paths[0])
+            
+            if (first_point is not None) and (first_point not in shrink_paths):
+                shrink_paths.append(first_point)
+            else:
+                shrink_paths.append(paths[-2])
+            
+            if paths[-1] not in shrink_paths:
+                shrink_paths.append(paths[-1])
+        
+        shrink_paths = np.array(shrink_paths)
+        shrink_paths = np.unique(shrink_paths, axis=0)
 
         return shrink_paths
 

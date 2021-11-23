@@ -43,8 +43,8 @@ def main():
         if lab_mode is True:
             rgb_img, d_img = robot_wrapper.get_rgbd_frame()
         else:
-            rgb_img = cv2.cvtColor(cv2.imread('test_images/near.png'), cv2.COLOR_BGR2RGB)
-            d_img = np.load('test_images/near.npy')
+            rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
+            d_img = np.load('test_images/obstacle3.npy')
 
         found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
         
@@ -107,6 +107,7 @@ def main():
         start_point = robot_coords
         end_point = (signal_coords[0] - 15, signal_coords[1])
         path = path_planner.compute(planimetry, start_point, end_point, False)
+        print(path)
         if debug == "True":
             plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory', coords=path)
 
