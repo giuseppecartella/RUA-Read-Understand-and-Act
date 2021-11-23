@@ -12,6 +12,18 @@ class PathPlanner():
             path.append(current.position)
             current = current.parent
         return path[::-1]  # Return reversed path
+   
+    def _isDiagonal(self, paths):
+        THRESHOLD = 2
+
+        A = paths[0]
+        B = paths[1]
+        C = paths[2]
+
+        angle_AB = int(np.degrees(np.arctan( (B[1] - A[1]) / (B[0] - A[0] + 0.00001) )))
+        angle_BC = int(np.degrees(np.arctan( (C[1] - B[1]) / (C[0] - B[0] + 0.00001) )))
+
+        return abs(angle_AB - angle_BC) < THRESHOLD
 
     def shrink_path(self, paths):
         THRESHOLD = 5
@@ -31,40 +43,40 @@ class PathPlanner():
         return shrink_paths
     
     def _avoid_diagonal(self, paths):
-        THRESHOLD = 2
-        '''
-        Just to understand: Example of diagonal and then forward
-            C
-            B
-        A
-        '''
-        A = paths[0]
-        B = paths[1]
-        old = [0, 0]
         shrink_paths = []
-
-        for i in range(2, len(paths)):
-            C = paths[i]
-            angle_A = int(np.degrees(np.arctan( (A[1] - old[1]) / (A[0] - old[0]))))
-            angle_B = int(np.degrees(np.arctan( (B[1] - A[1]) / (B[0] - A[0]))))
-            angle_C = int(np.degrees(np.arctan( (C[1] - B[1]) / (C[0] - B[0]))))
+        i = 0
+        was_diagonal = False    
+        first_point = None      #First diagonal's point
+        
+        while i < len(paths) - 2:
+            is_diagonal = self._isDiagonal(paths[i:i+3])
             
-            if abs(angle_A - angle_C) > THRESHOLD:
-                shrink_paths.append(A)
-
-            old = A
-            A = B
-            B = C
-
-        #For the last three couple 
-        if abs(angle_A - angle_B) < THRESHOLD:
-            shrink_paths.remove(old)
-            shrink_paths.append(A)
+            if is_diagonal == True:
+                if first_point is None:
+                    first_point = paths[i]
+                last_point = paths[i+2]
+                was_diagonal = True
+            elif (not is_diagonal) and (was_diagonal == True):
+                shrink_paths.append(first_point)
+                shrink_paths.append(last_point)
+                was_diagonal = False
+                first_point = None
+                i = i + 1
+            else:
+                shrink_paths.append(paths[i])
+            i = i + 1
         
-        if abs(angle_B - angle_C) < THRESHOLD:
-            shrink_paths.remove(A)
+        # ---- To HANDLE LAST TRIPLET ----#
+        if paths[0] not in shrink_paths:
+            shrink_paths.insert(0, paths[0])
         
-        shrink_paths.append(B)
+        if (first_point is not None) and (first_point not in shrink_paths):
+            shrink_paths.append(first_point)
+        else:
+            shrink_paths.append(paths[-2])
+        
+        if paths[-1] not in shrink_paths:
+            shrink_paths.append(paths[-1])
 
         return shrink_paths
 
