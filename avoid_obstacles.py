@@ -52,10 +52,15 @@ def main():
 
     found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
     
-    #This condition must be removed when exploration phase is implemented
+    
     if not found:
-        print('Signal not found. Impossibile to continue.')
-        return -1
+        print('Signal not found. STARTING EXPLORATION.')
+        # !!!!!  DA SCOMMENTARE SHRINK E GO_TO_RELATIVE DENTRO A EXPLORE() !!!!!!
+        rgb_img, d_img, x_c , y_c = robot_wrapper.explore(signal_detector, map_constructor, img_processing, path_planner)
+        if x_c is None:
+            print('Signal not found. Neither around or after moving. ')
+            return -1
+        
 
     d_img = img_processing.inpaint_depth_img(d_img)
     #--------------------------------------------------------------------------#

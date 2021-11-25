@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from .geometry_transformation import GeometryTransformation
+import matplotlib.pyplot as plt
+from utils.plotter import Plotter
 import time
+import project_parameters as params
 
 class RobotWrapper():
     def __init__(self, lab_mode="True"):
@@ -12,6 +15,56 @@ class RobotWrapper():
             from pyrobot import Robot
             self.robot = Robot('locobot')
             self.camera = self.robot.camera
+
+    def explore(self, signal_detector, map_constructor, img_processing, gt, path_planner):  
+        # TUTTI PARAM IN GRASSETTO DA METTERE POI IN PARAMS QUANDO ABBIAMO DECISO 
+        plotter = Plotter()
+        for i in range(params.MAX_ROTATIONS):
+            print('{} Rotation ...'.format(i))
+            rgb_img, d_img = self.get_rgbd_frame()
+            found, x_c, y_c = signal_detector.look_for_signal(rgb_img)
+            if found:
+                plt.imsave('results/rgb.jpg', d_img)
+                plt.imsave('results/depth.png', d_img, cmap='gray')
+                return rgb_img, d_img, x_c , y_c
+
+        # if I am here no signal Found
+        EXPLORATION_TIMES = 4
+        for times in range(EXPLORATION_TIMES):
+            
+            # per evitare di fare una foto uguale, possiamo tenere quella di prima ? --> la vede fuori dal for?
+            rgb_img, d_img = self.get_rgbd_frame()              
+            found, x_c, y_c = signal_detector.look_for_signal(rgb_img)
+            
+            if found:
+                plt.imsave('results/rgb.jpg', d_img)
+                plt.imsave('results/depth.png', d_img, cmap='gray')
+                return rgb_img, d_img, x_c , y_c
+
+            else:
+                # start exploring
+                print('{} Exploration ...'.format(times))
+                d_img = img_processing.inpaint_depth_img(d_img)
+                matrix_3d_points = gt.get_all_3d_points(d_img)
+
+                MAX_STEP_EXPLORATION = 120
+                # signal False means we do not use the signal coords for the planimetry
+                planimetry, robot_coords = map_constructor.construct_planimetry(matrix_3d_points, signal = False)
+                planimetry = img_processing.process_planimetry(planimetry)
+                
+                start = robot_coords
+                end =  (MAX_STEP_EXPLORATION, robot_coords[1])
+                
+                plotter.save_planimetry(planimetry, robot_coords, end, 'exploring_planimetry')            
+                
+                path = path_planner.compute(planimetry, start , end)
+                plotter.save_planimetry(planimetry, robot_coords, end, 'explore_plan_with_trajectory', coords=path)
+
+                #path = path_planner.shrink_path(path)
+                #self.follow_trajectory_with_update(path, robot_coords)
+
+
+
        
     def get_rgbd_frame(self):
         rgb_img, depth_img = self.camera.get_rgb_depth()
