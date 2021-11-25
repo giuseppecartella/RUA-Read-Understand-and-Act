@@ -5,6 +5,7 @@ from . import project_parameters as params
 class SignalDetector():
     def __init__(self, window_size=16, lab_mode="False"):
         self.lab_mode = lab_mode
+        print('Self lab mode: {}'.format(self.lab_mode))
         self.WINDOW_SIZE = window_size
         self.template = cv2.cvtColor(cv2.imread('utils/template.jpg'), cv2.COLOR_BGR2RGB)
 

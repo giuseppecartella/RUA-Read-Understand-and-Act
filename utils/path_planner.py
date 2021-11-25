@@ -25,6 +25,7 @@ class PathPlanner():
 
         return abs(angle_AB - angle_BC) < THRESHOLD
 
+    """
     def shrink_path(self, paths):
         THRESHOLD = 5
         point = paths[0]
@@ -41,8 +42,9 @@ class PathPlanner():
             shrink_paths = self._avoid_diagonal(shrink_paths)
 
         return shrink_paths
+    """
     
-    def _avoid_diagonal(self, paths):
+    def shrink_path(self, paths):
         shrink_paths = []
         i = 0
         was_diagonal = False    
