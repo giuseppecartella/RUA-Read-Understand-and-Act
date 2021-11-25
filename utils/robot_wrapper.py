@@ -90,9 +90,10 @@ class RobotWrapper():
 
     def follow_trajectory(self, trajectory, robot_coords):    
         pose_x, pose_y, pose_yaw = self.robot.base.get_state('odom')
-        #print('Pos coords: {}, {}'.format(pose_x, pose_y))
         starting_pose = np.array([pose_x, pose_y, pose_yaw])
         y_robot = robot_coords[1]
+
+     
 
         old_path = (0,0)
 
@@ -126,7 +127,8 @@ class RobotWrapper():
                 coords[0][1] = 0.0
         
             self.reach_relative_point(coords[0][0], coords[0][1])
-            time.sleep(0.5)
+        
+           
 
 
 
