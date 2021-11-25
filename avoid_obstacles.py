@@ -142,7 +142,7 @@ def main():
 
     #-----------------------------FOLLOW TRAJECTORY---------------------------#
     if lab_mode == "True":
-        robot_wrapper.follow_trajectory_with_update(path, robot_coords)
+        robot_wrapper.follow_trajectory(path, robot_coords)
 
     """
     codice da testare per capire se funziona l'aggiornamento della global position
