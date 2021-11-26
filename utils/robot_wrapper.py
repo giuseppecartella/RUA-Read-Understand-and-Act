@@ -85,22 +85,8 @@ class RobotWrapper():
 
     def _reset_robot_global_position(self):
         self.robot.base.base_state.state.update(0.0,0.0,0.0)
-<<<<<<< HEAD
     
     """
-=======
-
-    def follow_trajectory_new(self, trajectory, robot_coords):
-        current_point_planimetry = robot_coords
-
-        for i in range(len(trajectory) - 1):
-            delta_x = trajectory[i + 1][0] - current_point_planimetry[0]
-            delta_y = - (trajectory[i + 1][1] - current_point_planimetry[1])
-
-            #Per calcolare la current pose rispetto al global frame dobbiamo 
-            # considerare l'orientamento del robot
-
->>>>>>> 985f8f2e787ac4886389487433b9fef1d8ed8173
     def follow_trajectory(self, trajectory, robot_coords):    
         pose_x, pose_y, pose_yaw = self.robot.base.get_state('odom')
         starting_pose = np.array([pose_x, pose_y, pose_yaw])
