@@ -91,7 +91,7 @@ class PathPlanner():
         return shrink_paths'''
 
     def shrink_path(self, paths):
-        THRESHOLD = 7
+        THRESHOLD = 10
 
         #paths = np.array(paths)
         point = paths[0]

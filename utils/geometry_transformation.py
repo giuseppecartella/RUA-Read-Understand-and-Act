@@ -123,3 +123,14 @@ class GeometryTransformation():
             agent_state[-1] = current_pose[-1] - yaw
 
             return agent_state.reshape((1, 3))
+
+    def rotate_point(self, delta_x, delta_y, yaw):
+        rot_matrix = np.array([[np.cos(yaw), -np.sin(yaw), 0],
+                               [np.sin(yaw),  np.cos(yaw), 0],
+                               [          0,            0, 1]])
+        rotated_point = rot_matrix @ [delta_x, delta_y, 1]
+        rotated_point[1] = -rotated_point[1] #swap y coordinate
+
+        return rotated_point
+
+    

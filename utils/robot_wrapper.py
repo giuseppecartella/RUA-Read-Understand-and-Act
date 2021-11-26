@@ -3,7 +3,6 @@ import numpy as np
 from .geometry_transformation import GeometryTransformation
 import matplotlib.pyplot as plt
 from utils.plotter import Plotter
-import time
 from . import project_parameters as params
 
 class RobotWrapper():
@@ -73,6 +72,7 @@ class RobotWrapper():
 
     def reach_relative_point(self, x, y, theta=0.0):
         target_position = [x, y, theta]
+        print('Target position: {}'.format(target_position))
         self.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
 
     def reach_absolute_point(self, x, y, theta=0.0):
@@ -85,6 +85,10 @@ class RobotWrapper():
 
     def _reset_robot_global_position(self):
         self.robot.base.base_state.state.update(0.0,0.0,0.0)
+<<<<<<< HEAD
+    
+    """
+=======
 
     def follow_trajectory_new(self, trajectory, robot_coords):
         current_point_planimetry = robot_coords
@@ -96,12 +100,11 @@ class RobotWrapper():
             #Per calcolare la current pose rispetto al global frame dobbiamo 
             # considerare l'orientamento del robot
 
+>>>>>>> 985f8f2e787ac4886389487433b9fef1d8ed8173
     def follow_trajectory(self, trajectory, robot_coords):    
         pose_x, pose_y, pose_yaw = self.robot.base.get_state('odom')
         starting_pose = np.array([pose_x, pose_y, pose_yaw])
         y_robot = robot_coords[1]
-
-     
 
         old_path = (0,0)
 
@@ -111,22 +114,22 @@ class RobotWrapper():
             else:
                 y_new = (y_robot - trajectory[i][1])/100.0
 
-            #print('Considered coords: {}'.format(trajectory[i]))
-            #print('Old path: {}'.format(old_path))
-            #print('Starting pose: {}'.format(starting_pose))
+            print('Considered coords: {}'.format(trajectory[i]))
+            print('Old path: {}'.format(old_path))
+            print('Starting pose: {}'.format(starting_pose))
 
             x_new = trajectory[i][0]/100.0
             x_new -= (old_path[0] / 100.0)
             y_new -= ((y_robot - old_path[1]) / 100.0)
 
-            #print(x_new, y_new)
+            print(x_new, y_new)
             current_pose = starting_pose + np.array([x_new,y_new,0.0])
-            #print('Current pose: {}'.format(current_pose))
+            print('Current pose: {}'.format(current_pose))
 
             gt = GeometryTransformation()
             coords = gt.coordinate_projection(starting_pose, current_pose)
            
-            #print('Final coordinates: {}'.format(coords))
+            print('Final coordinates: {}'.format(coords))
         
             starting_pose = current_pose     
             old_path = trajectory[i]
@@ -135,16 +138,43 @@ class RobotWrapper():
                 coords[0][1] = 0.0
         
             self.reach_relative_point(coords[0][0], coords[0][1])
-        
-           
-
-
-
-    def follow_trajectory_with_update(self, trajectory, old_robot_coords):
+    """
+    
+    def get_robot_position(self):
         """
+        This function returns coordinates of the robot w.r.t. 
+        the origin of the global frame
+        """
+        return self.robot.base.get_state('odom')
+
+
+    def follow_trajectory(self, trajectory, starting_pose):
+        starting_yaw = self.get_robot_position()[-1]
+        previous_point = starting_pose
+
+        gt = GeometryTransformation()
+        for i in range(len(trajectory)):
+            current_yaw = self.get_robot_position()[-1]
+            delta_x = trajectory[i][0] - previous_point[0]
+            delta_y = trajectory[i][1] - previous_point[1] 
+            delta_yaw = current_yaw - starting_yaw #to test if it is the correct way
+            rotated_point = gt.rotate_point(delta_x, delta_y, delta_yaw)
+
+            x = rotated_point[0]
+            y = rotated_point[1]
+            theta = np.arctan2(y,x)
+            #self.reach_relative_point(x, y, theta)
+            print('X: {}, Y:{}, THETA:{}'.format(x,y,theta))
+            previous_point = trajectory[i]
+
+
+
+    """
+    def follow_trajectory_with_update(self, trajectory, old_robot_coords):
+    
         This function assumes that input trajectory contains points which coordinates 
         refer to a global planimetry
-        """
+  
         #convert list of tuples to numpy array
         trajectory = np.array(trajectory)
         self._reset_robot_global_position() #reset global robot position to (0,0)
@@ -163,3 +193,4 @@ class RobotWrapper():
             y = trajectory[i,1]
             theta = np.arctan2(y,x)
             self.reach_absolute_point(x, y, 0.0) #passing theta instead of x,y should avoid robot repositioning!
+    """

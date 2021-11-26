@@ -45,8 +45,8 @@ def main():
     if lab_mode == "True":
         rgb_img, d_img = robot_wrapper.get_rgbd_frame()
     else:
-        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle3.png'), cv2.COLOR_BGR2RGB)
-        d_img = np.load('test_images/obstacle3.npy')
+        rgb_img = cv2.cvtColor(cv2.imread('test_images/obstacle9.png'), cv2.COLOR_BGR2RGB)
+        d_img = np.load('test_images/obstacle9.npy')
 
     print('Lab mode: {}'.format(lab_mode))
 
@@ -56,10 +56,10 @@ def main():
     if not found:
         print('Signal not found. STARTING EXPLORATION.')
         # !!!!!  DA SCOMMENTARE SHRINK E GO_TO_RELATIVE DENTRO A EXPLORE() !!!!!!
-        rgb_img, d_img, x_c , y_c = robot_wrapper.explore(signal_detector, map_constructor, img_processing, path_planner)
-        if x_c is None:
-            print('Signal not found. Neither around or after moving. ')
-            return -1
+        #rgb_img, d_img, x_c , y_c = robot_wrapper.explore(signal_detector, map_constructor, img_processing, path_planner)
+        #if x_c is None:
+            #print('Signal not found. Neither around or after moving. ')
+            #return -1
         
 
     d_img = img_processing.inpaint_depth_img(d_img)
