@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from matplotlib.pyplot import axes
 import numpy as np
 from .node import Node
 import time
@@ -13,19 +14,19 @@ class PathPlanner():
             current = current.parent
         return path[::-1]  # Return reversed path
    
-    def _isDiagonal(self, paths):
-        THRESHOLD = 2
-
+    '''def _isDiagonal(self, paths):
         A = paths[0]
         B = paths[1]
         C = paths[2]
 
-        angle_AB = int(np.degrees(np.arctan( (B[1] - A[1]) / (B[0] - A[0] + 0.00001) )))
-        angle_BC = int(np.degrees(np.arctan( (C[1] - B[1]) / (C[0] - B[0] + 0.00001) )))
+        angle_AB = int(np.degrees(np.arctan( (B[1] - A[1]) / (B[0] - A[0] + 0.0000001) )))
+        angle_BC = int(np.degrees(np.arctan( (C[1] - B[1]) / (C[0] - B[0] + 0.0000001) )))
+        t= (abs(angle_AB) - abs(angle_BC))
+        print(A, B, C, angle_AB, angle_BC, t)
 
-        return abs(angle_AB - angle_BC) < THRESHOLD
+        return abs((abs(angle_AB) - abs(angle_BC))) == 0
 
-    """
+    
     def shrink_path(self, paths):
         THRESHOLD = 5
         point = paths[0]
@@ -59,7 +60,8 @@ class PathPlanner():
                 last_point = paths[i+2]
                 was_diagonal = True
             elif (not is_diagonal) and (was_diagonal == True):
-                shrink_paths.append(first_point)
+                if first_point not in shrink_paths:
+                    shrink_paths.append(first_point)
                 shrink_paths.append(last_point)
                 was_diagonal = False
                 first_point = None
@@ -72,8 +74,8 @@ class PathPlanner():
         if was_diagonal:
             shrink_paths.append(paths[-1])
         else:
-            if paths[0] not in shrink_paths:
-                shrink_paths.insert(0, paths[0])
+            #if paths[0] not in shrink_paths:
+                #shrink_paths.insert(0, paths[0])
             
             if (first_point is not None) and (first_point not in shrink_paths):
                 shrink_paths.append(first_point)
@@ -83,8 +85,25 @@ class PathPlanner():
             if paths[-1] not in shrink_paths:
                 shrink_paths.append(paths[-1])
         
-        shrink_paths = np.array(shrink_paths)
-        shrink_paths = np.unique(shrink_paths, axis=0)
+        #shrink_paths = np.array(shrink_paths)
+        #shrink_paths = np.unique(shrink_paths, axis=0)
+
+        return shrink_paths'''
+
+    def shrink_path(self, paths):
+        THRESHOLD = 7
+
+        #paths = np.array(paths)
+        point = paths[0]
+        shrink_paths = []
+
+        for i in range(1, len(paths)):
+            if ( abs(point[0] - paths[i][0]) > THRESHOLD )  and ( abs(point[1]) - paths[i][1] ):
+                shrink_paths.append(paths[i])
+                point = paths[i]
+        
+        shrink_paths.append(paths[-1])
+        #shrink_paths = np.unique(shrink_paths, axis=1)
 
         return shrink_paths
 
