@@ -4,7 +4,7 @@ from .geometry_transformation import GeometryTransformation
 import matplotlib.pyplot as plt
 from utils.plotter import Plotter
 import time
-import project_parameters as params
+from . import project_parameters as params
 
 class RobotWrapper():
     def __init__(self, lab_mode="True"):
@@ -62,8 +62,6 @@ class RobotWrapper():
 
                 #path = path_planner.shrink_path(path)
                 #self.follow_trajectory_with_update(path, robot_coords)
-
-
 
        
     def get_rgbd_frame(self):
