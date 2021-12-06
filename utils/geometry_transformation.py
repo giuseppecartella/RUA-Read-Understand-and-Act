@@ -107,6 +107,9 @@ class GeometryTransformation():
         pts_in_cam = np.concatenate((pts_in_cam, np.ones((1, pts_in_cam.shape[1]))), axis=0)
         return pts_in_cam
 
+
+    #forse questa funzione è da eliminare
+    """
     def coordinate_projection(self, starting_pose, current_pose):
             delta_x = starting_pose[0]
             delta_y = starting_pose[1]
@@ -123,14 +126,43 @@ class GeometryTransformation():
             agent_state[-1] = current_pose[-1] - yaw
 
             return agent_state.reshape((1, 3))
+    """
 
     def rotate_point(self, delta_x, delta_y, yaw):
         rot_matrix = np.array([[np.cos(yaw), -np.sin(yaw), 0],
                                [np.sin(yaw),  np.cos(yaw), 0],
                                [          0,            0, 1]])
-        rotated_point = rot_matrix @ [delta_x, delta_y, 1]
+
+        original_point = np.array([delta_x, delta_y, 1])
+        rotated_point = np.matmul(rot_matrix, original_point.T)
         rotated_point[1] = -rotated_point[1] #swap y coordinate
 
         return rotated_point
+
+    def translate_point(self, dx, dy, original_point):
+        translation_matrix = np.array([[1, 0, dx],
+                                       [0, 1, dy],
+                                       [0, 0,  1]])
+        
+        translated_point = np.matmul(translation_matrix, original_point.T)
+        return translated_point
+
+    def update_signal_abs_coords(self, signal_3d_point, robot_wrapper, initial_pose):
+        delta_x = signal_3d_point[0] / 100.0
+        delta_y = signal_3d_point[1] / 100.0
+
+        robot_state = robot_wrapper.get_robot_position()
+        x = robot_state[0]
+        y = robot_state[1]
+        starting_yaw = initial_pose[-1]
+        current_yaw = robot_state[-1]
+        yaw = current_yaw - starting_yaw
+
+        rotated_point = self.rotate_point(delta_x, delta_y, yaw)
+        translated_point = self.translate_point(x,y,rotated_point)
+    
+        print(delta_x, delta_y, x, y, yaw, rotated_point)
+        print('Translated point: {}'.format(translated_point))
+        return translated_point
 
     

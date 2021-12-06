@@ -86,23 +86,13 @@ class MapConstructor():
         boundary_right = np.argmax(boundary_right) 
         boundary_right = planimetry.shape[1] - boundary_right 
         
-        """if boundary_left > params.BASE_ROBOT*100 +10:
-            boundary_left -= params.BASE_ROBOT*100 -10
-        else:
-            boundary_left = 0
-        if boundary_right < planimetry.shape[1] - params.BASE_ROBOT*100 -10: 
-            boundary_right += params.BASE_ROBOT*100 +10
-        else:
-            boundary_right = planimetry.shape[1] -1
-        boundary_right = int(boundary_right)
-        boundary_left = int(boundary_left)"""
 
         if robot_coords[1] < boundary_left:
             boundary_left = robot_coords[1]
             robot_coords = (0, 0)
         elif robot_coords[1] > boundary_right:
             boundary_right = robot_coords[1]
-            y_robot = robot_coords[1] - boundary_left
+            y_robot = robot_coords[1] - boundary_left - 1 #-1 in order to include robot limit
             robot_coords = (0, y_robot)
         else:
             # BL    R ___X CM ___BR
