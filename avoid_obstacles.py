@@ -44,7 +44,6 @@ def main():
     while True:
         print('entrato nel whileee')
         #-------------------------------SIGNAL DETECTION---------------------------#
-        # invertire gli if --> se in lab_mode fai while per routarsi o cercare il segnale
         if lab_mode == "True":
             print('qua')
             robot_wrapper.reset_camera()
@@ -59,7 +58,6 @@ def main():
 
         found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
         
-        
         if not found:
             print('Signal not found. STARTING EXPLORATION.')
             print(signal_abs_coords)
@@ -69,7 +67,6 @@ def main():
                 print('Signal not found. Neither around or after moving. ')
                 return -1
             
-
         d_img = img_processing.inpaint_depth_img(d_img)
         #--------------------------------------------------------------------------#
 
@@ -159,7 +156,10 @@ def main():
 
         #-----------------------------FOLLOW TRAJECTORY---------------------------#
         if lab_mode == "True":
-            robot_wrapper.follow_trajectory(path, robot_coords)
+            angular_path = robot_wrapper.follow_trajectory(path, robot_coords)
+            print("------\nAngular\n")
+            print(angular_path)
+            break
 
         """
         codice da testare per capire se funziona l'aggiornamento della global position
