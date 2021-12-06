@@ -39,7 +39,6 @@ class RobotWrapper():
         # if I am here no signal Found
         EXPLORATION_TIMES = 4
         for times in range(EXPLORATION_TIMES):
-
             if signal_abs_coords is not None:
                 print('conosco dove si trova segnale, mi ruoto')
                 angle_movement = self.compute_angle_towards_signal(signal_abs_coords)
@@ -105,6 +104,7 @@ class RobotWrapper():
         return self.camera.get_intrinsics()
 
     def compute_angle_towards_signal(self, signal_abs_coords):
+        """
         current_pose = self.get_robot_position()
         print('Current pose: {}'.format(current_pose))
         delta_x = current_pose[0] - signal_abs_coords[0]
@@ -117,6 +117,31 @@ class RobotWrapper():
         angle_movement = angle_robot_signal - delta_angle
         print('Delta angle, angle_rob_signal, angle_movement: {},{},{}'.format(delta_angle, angle_robot_signal, angle_movement))
         return angle_movement
+        """
+        gt = GeometryTransformation()
+        current_pose = self.get_robot_position()
+        yaw = current_pose[-1]
+        dx = current_pose[0]
+        dy = current_pose[1]
+        x = signal_abs_coords[0]
+        y = signal_abs_coords[1]
+
+        translation_matrix = np.array([[1,0,dx],
+                                       [0,1,dy],
+                                       [0,0, 1]])
+        inverse_translation = np.linalg.inv(translation_matrix)
+
+        translated_point = np.matmul(inverse_translation, np.array([x,y,1]).T)
+
+        rotation_matrix = np.array([[np.cos(yaw), -np.sin(yaw), 0],
+                                    [np.sin(yaw),  np.cos(yaw), 0],
+                                    [          0,            0, 1]])
+                        
+        final_point = np.matmul(rotation_matrix, translated_point.T)
+
+        final_angle = np.arctan2(final_point[0], final_point[1])
+        return final_angle
+
 
     def reach_relative_point(self, x, y, theta=0.0):
         target_position = [x, y, theta]
@@ -143,6 +168,7 @@ class RobotWrapper():
     def follow_trajectory(self, trajectory, starting_pose):
         starting_yaw = self.get_robot_position()[-1]
         previous_point = starting_pose
+        angular_path = []
 
         gt = GeometryTransformation()
         for idx, i in enumerate(range(len(trajectory))):
@@ -158,11 +184,13 @@ class RobotWrapper():
 
             if idx == (len(trajectory) - 1):
                 theta = 0.0
-            self.reach_relative_point(x, y, theta)
-
+            #self.reach_relative_point(x, y, theta)
+            angular_path.append([x, y, theta])
 
             print('X: {}, Y:{}, THETA:{}'.format(x,y,theta))
             previous_point = trajectory[i]
+        
+        return angular_path
 
 
     """
