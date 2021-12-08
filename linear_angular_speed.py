@@ -29,6 +29,13 @@ def get_trajectory_straight(start_pos, dt, r, v, s):
     states = get_state_trajectory_from_controls(start_pos, dt, controls)
     return states, controls
 
+def do_rotation(p, val, dt, r, v):
+    if p[1] < 0:
+        state, _ = get_trajectory_rotate_dx(val, dt, r, v, abs(np.arctan2(p[1],p[0]+0.000001)))
+    else:
+        state, _ = get_trajectory_rotate_sx(val, dt, r, v, abs(np.arctan2(p[1],p[0]+0.000001)))
+    
+    return state
 
 def get_trajectory(bot, path):
     v = bot.configs.BASE.MAX_ABS_FWD_SPEED
@@ -82,14 +89,6 @@ def get_trajectory(bot, path):
         print("Concatenate state: ", concatenate_state)
 
     return concatenate_state
-
-def do_rotation(p, val, dt, r, v):
-    if p[1] < 0:
-        state, _ = get_trajectory_rotate_dx(val, dt, r, v, abs(np.arctan2(p[1],p[0]+0.000001)))
-    else:
-        state, _ = get_trajectory_rotate_sx(val, dt, r, v, abs(np.arctan2(p[1],p[0]+0.000001)))
-    
-    return state
     
 path1 = [[1.24, -0.01, -0.008064341306767012], [0.26, -0.29, -0.8398896196381794]]
 path2 = [[0.74, -0.01, -0.013512691013328216], [0.26, -0.75, -1.2370941502573463], [0.26, -0.01, -0.03844259002118798], [0.24, -0.0, 0.0], [0.26, 0.75, -1.2370941502573463], [0.0, -0.0, 0.0]]
