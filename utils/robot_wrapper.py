@@ -103,6 +103,7 @@ class RobotWrapper():
     def get_intrinsic_matrix(self):
         return self.camera.get_intrinsics()
 
+    
     def compute_angle_towards_signal(self, signal_abs_coords):
         """
         current_pose = self.get_robot_position()
@@ -117,6 +118,7 @@ class RobotWrapper():
         angle_movement = angle_robot_signal - delta_angle
         print('Delta angle, angle_rob_signal, angle_movement: {},{},{}'.format(delta_angle, angle_robot_signal, angle_movement))
         return angle_movement
+        """
         """
         gt = GeometryTransformation()
         current_pose = self.get_robot_position()
@@ -140,6 +142,28 @@ class RobotWrapper():
         final_point = np.matmul(rotation_matrix, translated_point.T)
 
         final_angle = np.arctan2(final_point[0], final_point[1])
+        return final_angle
+        """
+        current_pose = self.get_robot_position()
+        x_robot = current_pose[0]
+        y_robot = current_pose[1]
+        yaw = current_pose[-1]
+        x_signal = signal_abs_coords[0]
+        y_signal = signal_abs_coords[1]
+
+        delta_x = x_signal - x_robot
+        delta_y = y_signal - y_robot
+
+        #now consider the typical coordinates system
+        #swap x,y
+        delta_x, delta_y = delta_y, delta_x
+        #negate new delta_x (i.e. old delta_y)
+        delta_x = - delta_x
+        
+        
+        angle = np.arctan2(delta_y, delta_x)
+
+        final_angle = yaw + (np.pi/2) - angle #to verify how yaw is returned by get_state('odom')
         return final_angle
 
 

@@ -150,7 +150,7 @@ class GeometryTransformation():
     def update_signal_abs_coords(self, signal_3d_point, robot_wrapper, initial_pose):
         delta_x = signal_3d_point[0] / 100.0
         delta_y = signal_3d_point[1] / 100.0
-
+    
         robot_state = robot_wrapper.get_robot_position()
         x = robot_state[0]
         y = robot_state[1]
