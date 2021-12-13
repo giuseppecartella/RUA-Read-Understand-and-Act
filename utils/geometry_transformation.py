@@ -147,16 +147,16 @@ class GeometryTransformation():
         translated_point = np.matmul(translation_matrix, original_point.T)
         return translated_point
 
-    def update_signal_abs_coords(self, signal_3d_point, robot_wrapper, initial_pose):
+    def update_signal_abs_coords(self, signal_3d_point, robot_wrapper):
         delta_x = signal_3d_point[0] / 100.0
         delta_y = signal_3d_point[1] / 100.0
     
         robot_state = robot_wrapper.get_robot_position()
         x = robot_state[0]
         y = robot_state[1]
-        starting_yaw = initial_pose[-1]
+    
         current_yaw = robot_state[-1]
-        yaw = current_yaw - starting_yaw
+        yaw = current_yaw
 
         rotated_point = self.rotate_point(delta_x, delta_y, yaw)
         translated_point = self.translate_point(x,y,rotated_point)

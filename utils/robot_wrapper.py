@@ -41,7 +41,7 @@ class RobotWrapper():
         for times in range(EXPLORATION_TIMES):
             if signal_abs_coords is not None:
                 print('conosco dove si trova segnale, mi ruoto')
-                angle_movement = self.compute_angle_towards_signal(signal_abs_coords)
+                angle_movement = self.allineate_robot(signal_abs_coords)
                 self.turn(angle_movement)
             
             # per evitare di fare una foto uguale, possiamo tenere quella di prima ? --> la vede fuori dal for?
@@ -87,7 +87,7 @@ class RobotWrapper():
                     self.follow_trajectory(path, robot_coords)
                 else:
                     if signal_abs_coords is not None:
-                        angle_movement = self.compute_angle_towards_signal(signal_abs_coords)
+                        angle_movement = self.allineate_robot(signal_abs_coords)
                         self.turn(angle_movement)
                     else:
                         self.turn(- np.pi / 3)
@@ -104,67 +104,21 @@ class RobotWrapper():
         return self.camera.get_intrinsics()
 
     
-    def compute_angle_towards_signal(self, signal_abs_coords):
-        """
+    def allineate_robot(self, signal_abs_coords):
+        print('Sto calcolando angolo per riallinearmi al robot')
         current_pose = self.get_robot_position()
-        print('Current pose: {}'.format(current_pose))
         delta_x = current_pose[0] - signal_abs_coords[0]
         delta_y = current_pose[1] - signal_abs_coords[1]
+
+        alpha = np.arctan2(delta_y, delta_x)
         yaw = current_pose[-1]
-        print('Delta x, y, yaw: {}, {}, {}'.format(delta_x, delta_y, yaw))
 
-        delta_angle = yaw + np.pi/2
-        angle_robot_signal = np.arctan2(delta_x, delta_y)
-        angle_movement = angle_robot_signal - delta_angle
-        print('Delta angle, angle_rob_signal, angle_movement: {},{},{}'.format(delta_angle, angle_robot_signal, angle_movement))
-        return angle_movement
-        """
-        """
-        gt = GeometryTransformation()
-        current_pose = self.get_robot_position()
-        yaw = current_pose[-1]
-        dx = current_pose[0]
-        dy = current_pose[1]
-        x = signal_abs_coords[0]
-        y = signal_abs_coords[1]
+        #consider alpha and yaw always positive
+        alpha = alpha if alpha >=0 else (2*np.pi + alpha)
+        yaw = yaw if yaw >= 0 else (2*np.pi + yaw)
 
-        translation_matrix = np.array([[1,0,dx],
-                                       [0,1,dy],
-                                       [0,0, 1]])
-        inverse_translation = np.linalg.inv(translation_matrix)
-
-        translated_point = np.matmul(inverse_translation, np.array([x,y,1]).T)
-
-        rotation_matrix = np.array([[np.cos(yaw), -np.sin(yaw), 0],
-                                    [np.sin(yaw),  np.cos(yaw), 0],
-                                    [          0,            0, 1]])
-                        
-        final_point = np.matmul(rotation_matrix, translated_point.T)
-
-        final_angle = np.arctan2(final_point[0], final_point[1])
-        return final_angle
-        """
-        current_pose = self.get_robot_position()
-        x_robot = current_pose[0]
-        y_robot = current_pose[1]
-        yaw = current_pose[-1]
-        x_signal = signal_abs_coords[0]
-        y_signal = signal_abs_coords[1]
-
-        delta_x = x_signal - x_robot
-        delta_y = y_signal - y_robot
-
-        #now consider the typical coordinates system
-        #swap x,y
-        delta_x, delta_y = delta_y, delta_x
-        #negate new delta_x (i.e. old delta_y)
-        delta_x = - delta_x
-        
-        
-        angle = np.arctan2(delta_y, delta_x)
-
-        final_angle = yaw + (np.pi/2) - angle #to verify how yaw is returned by get_state('odom')
-        return final_angle
+        print('Angolo calcolato: {}'.format(alpha - yaw))
+        return alpha - yaw
 
 
     def reach_relative_point(self, x, y, theta=0.0):

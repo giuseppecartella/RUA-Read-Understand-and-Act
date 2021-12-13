@@ -38,7 +38,6 @@ def main():
     plotter = Plotter('results')
     #--------------------------------------------------------------------------#
 
-    initial_pose = robot_wrapper.get_robot_position()
     signal_abs_coords = None
 
     while True:
@@ -80,7 +79,7 @@ def main():
 
         if signal_abs_coords is None:
             print('signal found. updating global signal coordinates')
-            signal_abs_coords = gt.update_signal_abs_coords(signal_3d_point, robot_wrapper, initial_pose)
+            signal_abs_coords = gt.update_signal_abs_coords(signal_3d_point, robot_wrapper)
 
         if signal_distance <= params.STOP_DISTANCE_LIMIT:
             break
