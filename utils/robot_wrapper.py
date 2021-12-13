@@ -208,14 +208,13 @@ class RobotWrapper():
 
             if idx == (len(trajectory) - 1):
                 theta = 0.0
-            #self.reach_relative_point(x, y, theta)
+            
             angular_path.append([x, y, theta])
 
             print('X: {}, Y:{}, THETA:{}'.format(x,y,theta))
             previous_point = trajectory[i]
         
         return angular_path
-
 
     """
     def follow_trajectory_with_update(self, trajectory, old_robot_coords):
