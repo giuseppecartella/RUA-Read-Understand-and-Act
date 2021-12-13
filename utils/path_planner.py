@@ -227,6 +227,6 @@ class PathPlanner():
                 # Add the child to the open list
                 open_list.append(child)
 
-                #I just want to do steps of 1m, so i stop when i get to 100
+                #I just want to do steps of 1m, so i stop when i get to 150
                 if child.position[0] > 150:
                     return self.return_path(current_node)

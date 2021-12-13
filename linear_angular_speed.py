@@ -23,7 +23,7 @@ def get_trajectory_rotate_dx(start_pos, dt, r, v, angle):
 
 def get_trajectory_straight(start_pos, dt, r, v, s):
     w = v / r
-    T = int(np.round(s / v / dt)) 
+    T = abs(int(np.round(s / v / dt)))
     
     controls = get_control_trajectory("straight", T, v, w)
     states = get_state_trajectory_from_controls(start_pos, dt, controls)
@@ -41,9 +41,17 @@ def get_trajectory(bot, path):
     v = bot.configs.BASE.MAX_ABS_FWD_SPEED
     w = bot.configs.BASE.MAX_ABS_TURN_SPEED
 
-    s = 3.0
-    dt = 1. / (s / v)
+    #dt = 1. / (s / v)
+    dt = 1. / bot.configs.BASE.BASE_CONTROL_RATE
     r = v / w
+
+    ''''print(bot.configs.BASE.MAX_ABS_FWD_SPEED , bot.configs.BASE.MAX_ABS_TURN_SPEED)
+    v = 0.2
+    w = 0.5
+    exe_time = 4
+    dt = 1. / 40
+    r = v / w
+    bot.base.set_vel(fwd_speed = v, turn_speed = w, exe_time = exe_time)'''
 
     start_state = np.array(bot.base.get_state("odom"))
     concatenate_state = []
@@ -62,7 +70,8 @@ def get_trajectory(bot, path):
             else:
                 state = do_rotation(p, val, dt, r, v)
 
-                state1, _ = get_trajectory_straight(concatenate_state[-1, :].copy(), dt, r, v, p[0])
+                diagonal = np.sqrt( p[0] ** 2 + p[1] ** 2 )
+                state1, _ = get_trajectory_straight(concatenate_state[-1, :].copy(), dt, r, v, diagonal)
                 concatenate_state = np.concatenate([state, state1], 0)
                 first_rotation = True
             print("start state: ", start_state)
@@ -81,7 +90,8 @@ def get_trajectory(bot, path):
 
                 concatenate_state = np.concatenate([concatenate_state, state], 0)
 
-                state, _ = get_trajectory_straight(concatenate_state[-1, :].copy(), dt, r, v, p[0])
+                diagonal = np.sqrt( p[0] ** 2 + p[1] ** 2 )
+                state, _ = get_trajectory_straight(concatenate_state[-1, :].copy(), dt, r, v, diagonal)
                 print("state after straight: ", state)
  
             concatenate_state = np.concatenate([concatenate_state, state], 0)
@@ -92,10 +102,13 @@ def get_trajectory(bot, path):
     
 path1 = [[1.24, -0.01, -0.008064341306767012], [0.26, -0.29, -0.8398896196381794]]
 path2 = [[0.74, -0.01, -0.013512691013328216], [0.26, -0.75, -1.2370941502573463], [0.26, -0.01, -0.03844259002118798], [0.24, -0.0, 0.0], [0.26, 0.75, -1.2370941502573463], [0.0, -0.0, 0.0]]
+path3 = [[1.08, 0.01, 0.009258994662123083], [0.26, 0.3, 0.8567056281827387], [0.16, 0.03, 0.0]]
+path4 = [[0.9, 0.01, 0.011110653897607473], [0.26, 0.37, 0.9582587701845933], [0.26, 0.04, 0.15264932839526515], [0.08, -0.0, 0.0]]
+path5 = [[0.45, 0.01, 0.022218565326719057], [0.26, 0.43, 1.0269638704927742], [0.26, 0.06, 0.22679884805388587], [0.18, 0.22, 0.0]]
 
 bot = Robot('locobot')
 bot.camera.reset()
-states = get_trajectory(bot, path1)
+states = get_trajectory(bot, path5)
 bot.base.track_trajectory(states, close_loop=True)
 
 '''states1, _ = get_trajectory_straight(start_state, dt, r, v, 1.0)
