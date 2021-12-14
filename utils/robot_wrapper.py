@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+
+from utils.movement_helper import Movement_helper
 from .geometry_transformation import GeometryTransformation
 import matplotlib.pyplot as plt
 from utils.plotter import Plotter
@@ -20,7 +22,7 @@ class RobotWrapper():
         # TUTTI PARAM IN GRASSETTO DA METTERE POI IN PARAMS QUANDO ABBIAMO DECISO 
         plotter = Plotter('results')
         
-        """
+        
         for i in range(params.MAX_ROTATIONS):
             print('{} Rotation ...'.format(i))
             rgb_img, d_img = self.get_rgbd_frame()
@@ -34,7 +36,7 @@ class RobotWrapper():
             else:
                 self.turn(params.ANGLES_RADIANT)
                 print("segnale NON trovato")
-        """
+        
 
         # if I am here no signal Found
         EXPLORATION_TIMES = 4
@@ -76,7 +78,7 @@ class RobotWrapper():
                 #plotter.save_planimetry(planimetry, robot_coords, end, 'explore_plan_with_trajectory', coords=path)
                 copy_planimetry = copy.deepcopy(planimetry)
 
-                if len(path) > 0:
+                if (path is not None):
                     for i in range(len(path)):
                         x = path[i][0]
                         y = path[i][1]
@@ -84,6 +86,7 @@ class RobotWrapper():
                     plt.imsave('results/planimetry_with_trajectory.png', copy_planimetry, cmap='gray', origin='lower')
 
                     path = path_planner.shrink_path(path)
+                    print("\n\n\n\n", path)
                     self.follow_trajectory(path, robot_coords)
                 else:
                     if signal_abs_coords is not None:
@@ -106,16 +109,22 @@ class RobotWrapper():
     
     def allineate_robot(self, signal_abs_coords):
         print('Sto calcolando angolo per riallinearmi al robot')
+        print('Signal abs coords: {}'.format(signal_abs_coords))
         current_pose = self.get_robot_position()
-        delta_x = current_pose[0] - signal_abs_coords[0]
-        delta_y = current_pose[1] - signal_abs_coords[1]
+        print('Current_pose: {}'.format(current_pose))
+        delta_x = signal_abs_coords[0] - current_pose[0]
+        delta_y = signal_abs_coords[1] - current_pose[1]
 
+        print('deltax: {}, deltay: {}'.format(delta_x, delta_y))
         alpha = np.arctan2(delta_y, delta_x)
         yaw = current_pose[-1]
+        print('Yaw corrente robot: {}'.format(yaw))
+        print('alpha: {}'.format(alpha))
 
         #consider alpha and yaw always positive
         alpha = alpha if alpha >=0 else (2*np.pi + alpha)
         yaw = yaw if yaw >= 0 else (2*np.pi + yaw)
+        print('Dopo che trasformo: alpha: {}, yaw:{}'.format(alpha, yaw))
 
         print('Angolo calcolato: {}'.format(alpha - yaw))
         return alpha - yaw
@@ -143,7 +152,7 @@ class RobotWrapper():
         return self.robot.base.get_state('odom')
 
 
-    def follow_trajectory(self, trajectory, starting_pose):
+    '''def follow_trajectory(self, trajectory, starting_pose):
         starting_yaw = self.get_robot_position()[-1]
         previous_point = starting_pose
         angular_path = []
@@ -163,35 +172,14 @@ class RobotWrapper():
             if idx == (len(trajectory) - 1):
                 theta = 0.0
             
-            angular_path.append([x, y, theta])
-
+            #angular_path.append([x, y, theta])
+            self.reach_relative_point(x, y, theta)
             print('X: {}, Y:{}, THETA:{}'.format(x,y,theta))
             previous_point = trajectory[i]
         
-        return angular_path
-
-    """
-    def follow_trajectory_with_update(self, trajectory, old_robot_coords):
+        return angular_path'''
     
-        This function assumes that input trajectory contains points which coordinates 
-        refer to a global planimetry
-  
-        #convert list of tuples to numpy array
-        trajectory = np.array(trajectory)
-        self._reset_robot_global_position() #reset global robot position to (0,0)
-        print('New state:')
-        print(self.robot.base.get_state('odom'))
-
-        #update y_coordinates to fit with the new reference system
-        trajectory[:,1] -= old_robot_coords[1]
-        trajectory[:,0] = -trajectory[:,0]
-        print('New path: {}'.format(trajectory))
-
-        #now we have the new x and y coordinates. we can follow the trajectory
-        #we compute theta angle in order to avoid robot repositioning each time
-        for i in range(len(trajectory)):
-            x = trajectory[i,0]
-            y = trajectory[i,1]
-            theta = np.arctan2(y,x)
-            self.reach_absolute_point(x, y, 0.0) #passing theta instead of x,y should avoid robot repositioning!
-    """
+    def follow_trajectory(self, path, robot_coords):
+        movement_helper = Movement_helper()
+        states = movement_helper.follow_trajectory(self.robot, path, robot_coords)
+        self.robot.base.track_trajectory(states, close_loop=True)
