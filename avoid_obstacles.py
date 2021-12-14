@@ -9,9 +9,10 @@ from utils.plotter import Plotter
 from utils.geometry_transformation import GeometryTransformation
 from utils.map_constructor import MapConstructor
 from utils.path_planner import PathPlanner
+from utils.movement_helper import Movement_helper
 import copy
 import matplotlib.pyplot as plt
-
+import time
 
 def main():
     #----------------------INITIALIZATION-------------------------------------#
@@ -35,6 +36,7 @@ def main():
     path_planner = PathPlanner()
     img_processing = ImgProcessing()
     gt = GeometryTransformation()
+    movement_helper = Movement_helper()
     plotter = Plotter('results')
     #--------------------------------------------------------------------------#
 
@@ -44,7 +46,6 @@ def main():
         print('entrato nel whileee')
         #-------------------------------SIGNAL DETECTION---------------------------#
         if lab_mode == "True":
-            print('qua')
             robot_wrapper.reset_camera()
             rgb_img, d_img = robot_wrapper.get_rgbd_frame()
         else:
@@ -128,43 +129,54 @@ def main():
         start_point = robot_coords
         end_point = (signal_coords[0], signal_coords[1])
         path = path_planner.compute(planimetry, start_point, end_point, False)
-        print('Original path: {}'.format(path))
-        if debug == "True":
-            #plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory', coords=path)
-            copy_planimetry = copy.deepcopy(planimetry)
+        if path is not None:
+            #print('Original path: {}'.format(path))
+            if debug == "True":
+                #plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory', coords=path)
+                copy_planimetry = copy.deepcopy(planimetry)
 
-            for i in range(len(path)):
-                x = path[i][0]
-                y = path[i][1]
-                copy_planimetry[x,y] = 100
-            plt.imsave('results/planimetry_with_trajectory.png', copy_planimetry, cmap='gray', origin='lower')
+                for i in range(len(path)):
+                    x = path[i][0]
+                    y = path[i][1]
+                    copy_planimetry[x,y] = 100
+                plt.imsave('results/planimetry_with_trajectory.png', copy_planimetry, cmap='gray', origin='lower')
 
-        path = path_planner.shrink_path(path)# To debug yet
-        print('Reduced path: {}'.format(path))
-        if debug == "True":
-            #plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_shrinked_path', coords=path)
-            copy_planimetry = copy.deepcopy(planimetry)
+            path = path_planner.shrink_path(path)# To debug yet
+            print("SHRINK - ", path)
+            if len(path) >= 2:
+                path = path_planner.clean_shrink_path(path, end_point)
+                print("CLEAN - ", path)
 
-            for i in range(len(path)):
-                x = path[i][0]
-                y = path[i][1]
-                copy_planimetry[x,y] = 100
-            plt.imsave('results/planimetry_with_shrinked_path.png', copy_planimetry, cmap='gray', origin='lower')
+            #print('Reduced path: {}'.format(path))
+            if debug == "True":
+                #plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_shrinked_path', coords=path)
+                copy_planimetry = copy.deepcopy(planimetry)
 
-        #--------------------------------------------------------------------------#
+                
+                for i in range(len(path)):
+                    x = path[i][0]
+                    y = path[i][1]
+                    copy_planimetry[x,y] = 100
+                plt.imsave('results/planimetry_with_shrinked_path.png', copy_planimetry, cmap='gray', origin='lower')
 
-        #-----------------------------FOLLOW TRAJECTORY---------------------------#
-        if lab_mode == "True":
-            angular_path = robot_wrapper.follow_trajectory(path, robot_coords)
-            print("------\nAngular\n")
-            print(angular_path)
+            #--------------------------------------------------------------------------#
+
+            #-----------------------------FOLLOW TRAJECTORY---------------------------#
+            
+            if lab_mode == "True":
+                robot_wrapper.follow_trajectory(path, robot_coords)
+                time.sleep(3)
+            
+            if signal_abs_coords is not None:
+                robot_pose = robot_wrapper.get_robot_position()
+                distance = np.sqrt( (robot_pose[0] - signal_abs_coords[0]) ** 2 + (robot_pose[1] - signal_abs_coords[1]) ** 2)
+                if distance < 0.30:
+                    break
+        else:
+            print("Path is None! ")
             break
 
-        """
-        codice da testare per capire se funziona l'aggiornamento della global position
-        if lab_mode == "True":
-            robot_wrapper.follow_trajectory_with_update(path, robot_coords) #global position is updated inside the function
-        """
+
 
     print('Arrived to destination!')
 
