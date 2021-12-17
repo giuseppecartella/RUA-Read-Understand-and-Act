@@ -1,0 +1,17 @@
+1° classe:
+go straight on--> varianti con i metri ecc..
+
+
+2° classe:
+turn right
+
+
+3° classe:
+turn left
+
+
+4° classes
+stop for different seconds (2-4-6 secondi per esempio).
+
+
+x ogni classe considerare diverse varianti
