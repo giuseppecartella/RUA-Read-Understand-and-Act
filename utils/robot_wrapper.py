@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from utils.movement_helper import Movement_helper
+
 from .geometry_transformation import GeometryTransformation
 import matplotlib.pyplot as plt
 from utils.plotter import Plotter
@@ -180,6 +180,8 @@ class RobotWrapper():
         return angular_path'''
     
     def follow_trajectory(self, path, robot_coords):
-        movement_helper = Movement_helper()
-        states = movement_helper.follow_trajectory(self.robot, path, robot_coords)
-        self.robot.base.track_trajectory(states, close_loop=True)
+        if self.lab_mode == 'True':
+            from utils.movement_helper import Movement_helper
+            movement_helper = Movement_helper()
+            states = movement_helper.follow_trajectory(self.robot, path, robot_coords)
+            self.robot.base.track_trajectory(states, close_loop=True)

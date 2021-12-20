@@ -9,7 +9,6 @@ from utils.plotter import Plotter
 from utils.geometry_transformation import GeometryTransformation
 from utils.map_constructor import MapConstructor
 from utils.path_planner import PathPlanner
-from utils.movement_helper import Movement_helper
 import copy
 import matplotlib.pyplot as plt
 import time
@@ -36,7 +35,6 @@ def main():
     path_planner = PathPlanner()
     img_processing = ImgProcessing()
     gt = GeometryTransformation()
-    movement_helper = Movement_helper()
     plotter = Plotter('results')
     #--------------------------------------------------------------------------#
 
@@ -79,8 +77,9 @@ def main():
         signal_distance = np.sqrt((x_signal - 0)**2 + (y_signal - 0)**2) #consider relative distance from robot
 
         if signal_abs_coords is None:
-            print('signal found. updating global signal coordinates')
-            signal_abs_coords = gt.update_signal_abs_coords(signal_3d_point, robot_wrapper)
+            if lab_mode == "True":
+                print('signal found. updating global signal coordinates')
+                signal_abs_coords = gt.update_signal_abs_coords(signal_3d_point, robot_wrapper)
 
         if signal_distance <= params.STOP_DISTANCE_LIMIT:
             break
@@ -90,18 +89,18 @@ def main():
         #For Locobot Y is positive to left.
         planimetry, robot_coords, signal_coords = map_constructor.construct_planimetry(matrix_3d_points, signal_3d_point)
         if debug == "True":
-            #plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'raw_planimetry')
-            copy_planimetry = copy.deepcopy(planimetry)
-            plt.imsave('results/raw_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
+            plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'raw_planimetry')
+            #copy_planimetry = copy.deepcopy(planimetry)
+            #plt.imsave('results/raw_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
 
         planimetry = img_processing.process_planimetry(planimetry)
 
         if debug == "True":
             plotter.save_image(rgb_img, 'rgb_image', False)
             plotter.save_image(d_img, 'depth_image', True)
-            #plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'processed_planimetry')
-            copy_planimetry = copy.deepcopy(planimetry)
-            plt.imsave('results/processed_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
+            plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'processed_planimetry')
+            #copy_planimetry = copy.deepcopy(planimetry)
+            #plt.imsave('results/processed_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
 
 
         #quantized_planimetry = img_processing.quantize(planimetry, params.QUANTIZATION_WINDOW_SIZE, params.THRESHOLD)
@@ -132,14 +131,14 @@ def main():
         if path is not None:
             #print('Original path: {}'.format(path))
             if debug == "True":
-                #plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory', coords=path)
-                copy_planimetry = copy.deepcopy(planimetry)
+                plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory', coords=path)
+                #copy_planimetry = copy.deepcopy(planimetry)
 
-                for i in range(len(path)):
-                    x = path[i][0]
-                    y = path[i][1]
-                    copy_planimetry[x,y] = 100
-                plt.imsave('results/planimetry_with_trajectory.png', copy_planimetry, cmap='gray', origin='lower')
+                #for i in range(len(path)):
+                    #x = path[i][0]
+                    #y = path[i][1]
+                    #copy_planimetry[x,y] = 100
+                #plt.imsave('results/planimetry_with_trajectory.png', copy_planimetry, cmap='gray', origin='lower')
 
             path = path_planner.shrink_path(path)# To debug yet
             print("SHRINK - ", path)
@@ -149,15 +148,15 @@ def main():
 
             #print('Reduced path: {}'.format(path))
             if debug == "True":
-                #plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_shrinked_path', coords=path)
-                copy_planimetry = copy.deepcopy(planimetry)
+                plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_shrinked_path', coords=path)
+                #copy_planimetry = copy.deepcopy(planimetry)
 
                 
-                for i in range(len(path)):
-                    x = path[i][0]
-                    y = path[i][1]
-                    copy_planimetry[x,y] = 100
-                plt.imsave('results/planimetry_with_shrinked_path.png', copy_planimetry, cmap='gray', origin='lower')
+                #for i in range(len(path)):
+                    #x = path[i][0]
+                    #y = path[i][1]
+                    #copy_planimetry[x,y] = 100
+                #plt.imsave('results/planimetry_with_shrinked_path.png', copy_planimetry, cmap='gray', origin='lower')
 
             #--------------------------------------------------------------------------#
 
@@ -166,6 +165,8 @@ def main():
             if lab_mode == "True":
                 robot_wrapper.follow_trajectory(path, robot_coords)
                 time.sleep(3)
+                #da sistemare per gestire meglio i thread!!!!!!!!!!!!!!!
+                
             
             if signal_abs_coords is not None:
                 robot_pose = robot_wrapper.get_robot_position()
