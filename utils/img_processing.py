@@ -2,6 +2,7 @@
 import numpy as np
 import cv2
 from utils import project_parameters as params
+from utils.map_constructor import MapConstructor
 
 class ImgProcessing():
     def __init__(self):
@@ -17,10 +18,13 @@ class ImgProcessing():
         result = cv2.medianBlur(result, 5)
         return result
 
-    def process_planimetry(self, planimetry):
+    def process_planimetry(self, planimetry, signal_coords):
         kernel = np.ones((3,3))
+        map_constructor = MapConstructor()
         # serve per togliere quei puntini bianchi ?? --> da controllare in lab 
         planimetry = cv2.medianBlur(planimetry.astype(np.ubyte), 5)
+        radius = 30
+        planimetry = map_constructor.circle_around_signal(planimetry, signal_coords[0], signal_coords[1], radius)
         planimetry = cv2.dilate(planimetry, kernel, iterations=1)
         planimetry = cv2.GaussianBlur(planimetry, params.GAUSSIAN_FILTER_SIZE, (params.GAUSSIAN_FILTER_SIZE[0]-1)/5) # filtro 51 sta almeno a 20 cm da ostacoli
         planimetry = np.where(planimetry > 1.9, 255, 0)

@@ -37,7 +37,13 @@ class MapConstructor():
         planimetry, robot_coords, signal_coords = self._clip_planimetry(planimetry, robot_coords, signal_coords)
         return planimetry, robot_coords, signal_coords
     """
+    def circle_around_signal(self, planimetry, xc , yc, radius):
+        for r in range(planimetry.shape[0]):
+            for c in range(planimetry.shape[1]):
+                if (r-xc)**2 + (c - yc)**2 <= radius ** 2:
+                    planimetry[r,c] = 0
 
+        return planimetry
 
     def construct_planimetry(self, matrix_3d_points, signal_3d_point = None, signal = True):
         y_left = np.max(matrix_3d_points[:,:,1]) #max because y is positive to left

@@ -93,7 +93,7 @@ def main():
             #copy_planimetry = copy.deepcopy(planimetry)
             #plt.imsave('results/raw_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
 
-        planimetry = img_processing.process_planimetry(planimetry)
+        planimetry = img_processing.process_planimetry(planimetry, signal_coords)
 
         if debug == "True":
             plotter.save_image(rgb_img, 'rgb_image', False)
@@ -126,29 +126,35 @@ def main():
 
         #-----------------------------PATH DEFINITION------------------------------#
         start_point = robot_coords
-        end_point = (signal_coords[0], signal_coords[1])
-        path = path_planner.compute(planimetry, start_point, end_point, False)
+
+        # chiedere altri***
+        end_point_signal = (signal_coords[0], signal_coords[1])
+        end_point_path = (signal_coords[0] -15, signal_coords[1])
+        
+        path = path_planner.compute(planimetry, start_point, end_point_path, False)
         if path is not None:
             #print('Original path: {}'.format(path))
             if debug == "True":
-                plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_trajectory', coords=path)
+                
+                plotter.save_planimetry(planimetry, start_point, end_point_signal, 'planimetry_with_trajectory', coords=path)
                 #copy_planimetry = copy.deepcopy(planimetry)
 
                 #for i in range(len(path)):
                     #x = path[i][0]
                     #y = path[i][1]
                     #copy_planimetry[x,y] = 100
+                
                 #plt.imsave('results/planimetry_with_trajectory.png', copy_planimetry, cmap='gray', origin='lower')
 
             path = path_planner.shrink_path(path)# To debug yet
             print("SHRINK - ", path)
             if len(path) >= 2:
-                path = path_planner.clean_shrink_path(path, end_point)
+                path = path_planner.clean_shrink_path(path, end_point_path)
                 print("CLEAN - ", path)
 
             #print('Reduced path: {}'.format(path))
             if debug == "True":
-                plotter.save_planimetry(planimetry, start_point, end_point, 'planimetry_with_shrinked_path', coords=path)
+                plotter.save_planimetry(planimetry, start_point, end_point_signal, 'planimetry_with_shrinked_path', coords=path)
                 #copy_planimetry = copy.deepcopy(planimetry)
 
                 
