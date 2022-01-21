@@ -9,9 +9,10 @@ from utils.plotter import Plotter
 from utils.geometry_transformation import GeometryTransformation
 from utils.map_constructor import MapConstructor
 from utils.path_planner import PathPlanner
-import copy
 import matplotlib.pyplot as plt
 import time
+
+from vision_transformer.predict import SignsReader
 
 def main():
     #----------------------INITIALIZATION-------------------------------------#
@@ -35,6 +36,7 @@ def main():
     path_planner = PathPlanner()
     img_processing = ImgProcessing()
     gt = GeometryTransformation()
+    signs_reader = SignsReader()
     plotter = Plotter('results')
     #--------------------------------------------------------------------------#
 
@@ -54,6 +56,10 @@ def main():
             plotter.save_image(rgb_img, 'rgb_image', False)
             plotter.save_image(d_img, 'depth_image', True)
 
+
+        #direi che prima bisogna capire se c e un segnale.
+        #
+
         found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
         
         if not found:
@@ -71,7 +77,7 @@ def main():
         #------------------------GEOMETRIC TRANSFORMATIONS-------------------------#
         matrix_3d_points = gt.get_all_3d_points(d_img)
         signal_3d_point = gt.get_single_3d_point(d_img, y_c, x_c)
-
+    
         x_signal = signal_3d_point[0]
         y_signal = signal_3d_point[1]
         signal_distance = np.sqrt((x_signal - 0)**2 + (y_signal - 0)**2) #consider relative distance from robot
@@ -103,25 +109,6 @@ def main():
             #plt.imsave('results/processed_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
 
 
-        #quantized_planimetry = img_processing.quantize(planimetry, params.QUANTIZATION_WINDOW_SIZE, params.THRESHOLD)
-        #Ricordarsi np.where con costante 1.9 da commentare nel caso in cui vogliamo provare con quantizzazione
-
-        #Quantization part
-        """start_quantized = img_processing.from_init_to_quantized_space(start, params.QUANTIZATION_WINDOW_SIZE)
-        end_quantized = img_processing.from_init_to_quantized_space(end, params.QUANTIZATION_WINDOW_SIZE)
-        #plotter.save_planimetry(quantized_planimetry, start_quantized, end_quantized, 'quantized_img')
-        
-        path = path_planner.compute(quantized_planimetry, start_quantized, end_quantized, False)
-        
-        for i in path:
-            quantized_planimetry[i[0], i[1]] = 255
-            coord = img_processing.from_quantize_space_to_init(i, params.QUANTIZATION_WINDOW_SIZE)
-            planimetry[coord[0], coord[1]] = 255
-            
-        
-        plotter.save_planimetry(planimetry, start, end, 'path_img_nicholas')
-        #plotter.save_planimetry(quantized_planimetry, start_quantized, end_quantized, 'path_img_quantized')
-        """
         #--------------------------------------------------------------------------#
 
         #-----------------------------PATH DEFINITION------------------------------#
@@ -134,17 +121,9 @@ def main():
         path = path_planner.compute(planimetry, start_point, end_point_path, False)
         if path is not None:
             #print('Original path: {}'.format(path))
-            if debug == "True":
-                
+            if debug == "True": 
                 plotter.save_planimetry(planimetry, start_point, end_point_signal, 'planimetry_with_trajectory', coords=path)
-                #copy_planimetry = copy.deepcopy(planimetry)
-
-                #for i in range(len(path)):
-                    #x = path[i][0]
-                    #y = path[i][1]
-                    #copy_planimetry[x,y] = 100
-                
-                #plt.imsave('results/planimetry_with_trajectory.png', copy_planimetry, cmap='gray', origin='lower')
+               
 
             path = path_planner.shrink_path(path)# To debug yet
             print("SHRINK - ", path)
@@ -155,14 +134,6 @@ def main():
             #print('Reduced path: {}'.format(path))
             if debug == "True":
                 plotter.save_planimetry(planimetry, start_point, end_point_signal, 'planimetry_with_shrinked_path', coords=path)
-                #copy_planimetry = copy.deepcopy(planimetry)
-
-                
-                #for i in range(len(path)):
-                    #x = path[i][0]
-                    #y = path[i][1]
-                    #copy_planimetry[x,y] = 100
-                #plt.imsave('results/planimetry_with_shrinked_path.png', copy_planimetry, cmap='gray', origin='lower')
 
             #--------------------------------------------------------------------------#
 
@@ -180,10 +151,8 @@ def main():
                 if distance < 0.30:
                     break
         else:
-            print("Path is None! ")
+            print("Path is None!")
             break
-
-
 
     print('Arrived to destination!')
 
