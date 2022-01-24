@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import time
 
 
 from .geometry_transformation import GeometryTransformation
@@ -185,3 +186,18 @@ class RobotWrapper():
             movement_helper = Movement_helper()
             states = movement_helper.follow_trajectory(self.robot, path, robot_coords)
             self.robot.base.track_trajectory(states, close_loop=True)
+        
+    def move_from_prediction(self, prediction):
+        if prediction == 0:
+            print('Predicted no sign, so robot will continue as usual')
+        elif prediction == 1:
+            self.reach_relative_point(1,0)
+        elif prediction == 2:
+            self.turn(1.57) #90 degrees
+        elif prediction == 3:
+            self.turn(-1.57)
+        elif prediction == 4:
+            print('Prediction is stop!. Robot will not move for 5 seconds')
+            #potremmo mettere una sleep di qualche secondo per simulare che il robot sta fermo
+            time.sleep(5)
+            

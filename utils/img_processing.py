@@ -31,6 +31,8 @@ class ImgProcessing():
         
         return planimetry
 
+    #probabilmente le funzioni di quantizzazione sono da eliminare
+    '''
     def quantize(self, planimetry, kernel, threshold_min):
         stride = kernel[0]
         
@@ -55,3 +57,4 @@ class ImgProcessing():
         x = coords_point[0] // kernel[0]
         y = coords_point[1] // kernel[1]
         return (x,y)
+        '''

@@ -57,9 +57,6 @@ def main():
             plotter.save_image(d_img, 'depth_image', True)
 
 
-        #direi che prima bisogna capire se c e un segnale.
-        #
-
         found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
         
         if not found:
