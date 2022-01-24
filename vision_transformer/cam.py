@@ -9,7 +9,6 @@ from vision_transformer.ViT import ViT
 
 class Cam():
     def __init__(self):
-        #load model
         self.CLS2IDX = {0: 'Continue', 1: 'Right', 2: 'Left', 3: 'Stop', 4: 'Nothing' }
         root = 'vision_transformer'
         model_path = os.path.join(root, 'model.pt')
