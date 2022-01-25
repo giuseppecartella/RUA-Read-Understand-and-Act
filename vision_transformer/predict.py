@@ -9,18 +9,20 @@ from vision_transformer.ViT import ViT
 #in order to insert best fine tuned hyperparameters
 #NB: MAYBE THE CNN IS THE BEST CHOICE TO PREFER.
 
+
 class SignsReader():
     def __init__(self):
         #load model
         root = 'vision_transformer'
         config_path = os.path.join(root, 'config.json')
         model_path = os.path.join(root, 'model.pt')
+        
         with open(config_path) as f:
             config = json.load(f)
 
 
-        model = timm.create_model('vit_tiny_patch16_224', pretrained=True)
-        model.eval()
+        self.model = timm.create_model('vit_tiny_patch16_224')
+        self.model.eval()
         checkpoint = torch.load(model_path)
         self.model.load_state_dict(checkpoint['model_state_dict'])
 

@@ -93,8 +93,6 @@ def main():
         planimetry, robot_coords, signal_coords = map_constructor.construct_planimetry(matrix_3d_points, signal_3d_point)
         if debug == "True":
             plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'raw_planimetry')
-            #copy_planimetry = copy.deepcopy(planimetry)
-            #plt.imsave('results/raw_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
 
         planimetry = img_processing.process_planimetry(planimetry, signal_coords)
 
@@ -102,8 +100,6 @@ def main():
             plotter.save_image(rgb_img, 'rgb_image', False)
             plotter.save_image(d_img, 'depth_image', True)
             plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'processed_planimetry')
-            #copy_planimetry = copy.deepcopy(planimetry)
-            #plt.imsave('results/processed_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
 
 
         #--------------------------------------------------------------------------#

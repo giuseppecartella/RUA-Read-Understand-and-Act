@@ -200,4 +200,5 @@ class RobotWrapper():
             print('Prediction is stop!. Robot will not move for 5 seconds')
             #potremmo mettere una sleep di qualche secondo per simulare che il robot sta fermo
             time.sleep(5)
+            print('stop terminato!!!')
             
