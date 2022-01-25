@@ -109,7 +109,7 @@ class Cam():
 
 cam = Cam()
 
-image = Image.open('samples/catdog.png')
+image = Image.open('Image_to_analyze.jpg')
 transformed_image = cam.apply_transformations(image)
 
 fig, axs = plt.subplots(1, 3)
