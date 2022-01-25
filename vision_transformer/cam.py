@@ -5,29 +5,34 @@ from PIL import Image
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import os
-from vision_transformer.ViT import ViT
+from ViT import ViT
 
 class Cam():
     def __init__(self):
-        self.CLS2IDX = {0: 'Continue', 1: 'Right', 2: 'Left', 3: 'Stop', 4: 'Nothing' }
-        root = 'vision_transformer'
+        #load model
+        self.CLS2IDX = {0: 'No signal', 1: 'go ahead', 2: 'Left', 3: 'right', 4: 'stop' }
+        #root = 'vision_transformer'
+        root = 'logs_vit_pretrained'
         model_path = os.path.join(root, 'model.pt')
 
-        self.model = ViT()
-        checkpoint = torch.load(model_path)
+        import timm
+        self.model = timm.create_model('vit_tiny_patch16_224')
+        checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model.eval()
 
 
     def apply_transformations(self, image):
-        normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        #normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         transform = transforms.Compose([
-            transforms.Resize(224),
-            transforms.CenterCrop(224),
+            transforms.Resize((224, 224)),
+            #transforms.CenterCrop(224),
             transforms.ToTensor(),
-            normalize,
+            #normalize,
         ])
-         
+        
+        transformed_img = transform(image)
+        print(transformed_img.shape)
         return transform(image)
 
     # create heatmap from mask on image
@@ -39,10 +44,10 @@ class Cam():
         return cam
     
     def generate_visualization(self, original_image, class_index=None):
-        transformer_attribution = self.generate_relevance(original_image.unsqueeze(0).cuda(), index=class_index).detach()
+        transformer_attribution = self.generate_relevance(original_image.unsqueeze(0), index=class_index).detach()
         transformer_attribution = transformer_attribution.reshape(1, 1, 14, 14)
         transformer_attribution = torch.nn.functional.interpolate(transformer_attribution, scale_factor=16, mode='bilinear')
-        transformer_attribution = transformer_attribution.reshape(224, 224).cuda().data.cpu().numpy()
+        transformer_attribution = transformer_attribution.reshape(224, 224).data.cpu().numpy()
         transformer_attribution = (transformer_attribution - transformer_attribution.min()) / (transformer_attribution.max() - transformer_attribution.min())
         image_transformer_attribution = original_image.permute(1, 2, 0).data.cpu().numpy()
         image_transformer_attribution = (image_transformer_attribution - image_transformer_attribution.min()) / (image_transformer_attribution.max() - image_transformer_attribution.min())
@@ -83,38 +88,37 @@ class Cam():
         return R_ss_addition
 
     def generate_relevance(self, input, index=None):
-        output = self.model(input, register_hook=True)
+        output = self.model(input)
         if index == None:
             index = np.argmax(output.cpu().data.numpy(), axis=-1)
 
         one_hot = np.zeros((1, output.size()[-1]), dtype=np.float32)
         one_hot[0, index] = 1
         one_hot = torch.from_numpy(one_hot).requires_grad_(True)
-        one_hot = torch.sum(one_hot.cuda() * output)
+        one_hot = torch.sum(one_hot* output)
         self.model.zero_grad()
         one_hot.backward(retain_graph=True)
 
         num_tokens = self.model.blocks[0].attn.get_attention_map().shape[-1]
-        R = torch.eye(num_tokens, num_tokens).cuda()
+        R = torch.eye(num_tokens, num_tokens)
         for blk in self.model.blocks:
             grad = blk.attn.get_attn_gradients()
             cam = blk.attn.get_attention_map()
             cam = self.avg_heads(cam, grad)
-            R += self.apply_self_attention_rules(R.cuda(), cam.cuda())
+            R += self.apply_self_attention_rules(R, cam)
 
         return R[0, 1:]
     
     def predict(self, image):
-        return self.model.forward(image.unsqueeze(0).cuda())
+        return self.model.forward(image.unsqueeze(0))
 
 cam = Cam()
-
-image = Image.open('Image_to_analyze.jpg')
+image = Image.open('Image.jpg')
 transformed_image = cam.apply_transformations(image)
 
 fig, axs = plt.subplots(1, 3)
-axs[0].imshow(image);
-axs[0].axis('off');
+axs[0].imshow(image)
+axs[0].axis('off')
 
 output = cam.predict(transformed_image)
 cam.print_top_classes(output)
