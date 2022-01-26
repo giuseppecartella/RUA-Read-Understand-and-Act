@@ -41,17 +41,20 @@ class SignalDetector():
         kp1, kp2, des1, des2 = self._compute_sift_imgs(self.template, rgb_image)
         # BFMatcher with default params
         bf = cv2.BFMatcher()
-        matches = bf.knnMatch(des1, des2, k=2)
 
-        # Apply ratio test
-        good, good_m = self._sift_ratio(matches)
+        if des2 is not None: 
+            matches = bf.knnMatch(des1, des2, k=2)
 
-        if len(good) < params.SIFT_MATCH_THRESHOLD:
-            return False, None, None
-        else:
-            coords = [kp2[good_m[i].trainIdx].pt for i in range(len(good))]
-            x_c, y_c = self._find_centre_coords(coords)
-            return True, x_c, y_c
+            # Apply ratio test
+            good, good_m = self._sift_ratio(matches)
+
+            if len(good) < params.SIFT_MATCH_THRESHOLD:
+                return False, None, None
+            else:
+                coords = [kp2[good_m[i].trainIdx].pt for i in range(len(good))]
+                x_c, y_c = self._find_centre_coords(coords)
+                return True, x_c, y_c
+        return False, None, None
 
     def get_signal_distance(self, x_c, y_c, depth_image):
         HALF_WINDOW_SIZE = int(self.WINDOW_SIZE / 2)

@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import cv2
+import timm
 from PIL import Image
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
@@ -10,12 +11,12 @@ from ViT import ViT
 class Cam():
     def __init__(self):
         #load model
-        self.CLS2IDX = {0: 'No signal', 1: 'go ahead', 2: 'Left', 3: 'right', 4: 'stop' }
+        self.CLS2IDX = {0: 'No_signal', 1: 'go_ahead', 2: 'Left', 3: 'right', 4: 'stop' }
         #root = 'vision_transformer'
-        root = 'logs_vit_pretrained'
-        model_path = os.path.join(root, 'model.pt')
+        #model_path = os.path.join(root, 'model.pt')
+        model_path = 'model.pt'
+        print(model_path)
 
-        import timm
         self.model = timm.create_model('vit_tiny_patch16_224')
         checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
         self.model.load_state_dict(checkpoint['model_state_dict'])
@@ -110,13 +111,14 @@ class Cam():
         return R[0, 1:]
     
     def predict(self, image):
-        return self.model.forward(image.unsqueeze(0))
+        output = self.model.forward(image.unsqueeze(0))
+        return output
 
 cam = Cam()
-image = Image.open('Image.jpg')
+image = Image.open('./9990.jpg')
 transformed_image = cam.apply_transformations(image)
 
-fig, axs = plt.subplots(1, 3)
+fig, axs = plt.subplots(1, 2)
 axs[0].imshow(image)
 axs[0].axis('off')
 
@@ -125,12 +127,26 @@ cam.print_top_classes(output)
 
 # cat - the predicted class
 image_1 = cam.generate_visualization(transformed_image)
+image_1 = cv2.resize(image_1, (640,480))
+image_1 = cv2.cvtColor(image_1, cv2.COLOR_BGR2RGB)
+print(image_1.shape)
+image_1 = image_1[:,:,2]
+print(image_1.shape)
 
-# generate visualization for class 243: 'bull mastiff'
-image_2 = cam.generate_visualization(transformed_image, class_index=1)
+mask = np.where(image_1>230, 255,0)
+print(mask.shape)
+mask = np.where(mask==255)
+row_median = np.median(mask[0])
+col_median = np.median(mask[1])
+print(int(row_median), int(col_median))
 
+
+#print(image_1.min() ,image_1.max())
+#no we should get the pixel coordinates and project back in the original image. 
 
 axs[1].imshow(image_1);
 axs[1].axis('off');
-axs[2].imshow(image_2);
-axs[2].axis('off');
+plt.show()
+
+plt.imshow(mask)
+plt.show()
