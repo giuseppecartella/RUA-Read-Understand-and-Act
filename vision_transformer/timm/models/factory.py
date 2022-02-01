@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from .registry import is_model, is_model_in_modules, model_entrypoint
 from .helpers import load_checkpoint
 from .layers import set_layer_config

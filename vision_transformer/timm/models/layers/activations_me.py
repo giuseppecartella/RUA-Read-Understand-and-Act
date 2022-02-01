@@ -14,12 +14,12 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 
-@torch.jit.script
+#@torch.jit.script
 def swish_jit_fwd(x):
     return x.mul(torch.sigmoid(x))
 
 
-@torch.jit.script
+#@torch.jit.script
 def swish_jit_bwd(x, grad_output):
     x_sigmoid = torch.sigmoid(x)
     return grad_output * (x_sigmoid * (1 + x * (1 - x_sigmoid)))
@@ -50,19 +50,19 @@ def swish_me(x, inplace=False):
 
 
 class SwishMe(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(SwishMe, self).__init__()
 
     def forward(self, x):
         return SwishJitAutoFn.apply(x)
 
 
-@torch.jit.script
+#@torch.jit.script
 def mish_jit_fwd(x):
     return x.mul(torch.tanh(F.softplus(x)))
 
 
-@torch.jit.script
+#@torch.jit.script
 def mish_jit_bwd(x, grad_output):
     x_sigmoid = torch.sigmoid(x)
     x_tanh_sp = F.softplus(x).tanh()
@@ -89,19 +89,19 @@ def mish_me(x, inplace=False):
 
 
 class MishMe(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(MishMe, self).__init__()
 
     def forward(self, x):
         return MishJitAutoFn.apply(x)
 
 
-@torch.jit.script
-def hard_sigmoid_jit_fwd(x, inplace: bool = False):
+#@torch.jit.script
+def hard_sigmoid_jit_fwd(x, inplace = False):
     return (x + 3).clamp(min=0, max=6).div(6.)
 
 
-@torch.jit.script
+#@torch.jit.script
 def hard_sigmoid_jit_bwd(x, grad_output):
     m = torch.ones_like(x) * ((x >= -3.) & (x <= 3.)) / 6.
     return grad_output * m
@@ -119,24 +119,24 @@ class HardSigmoidJitAutoFn(torch.autograd.Function):
         return hard_sigmoid_jit_bwd(x, grad_output)
 
 
-def hard_sigmoid_me(x, inplace: bool = False):
+def hard_sigmoid_me(x, inplace = False):
     return HardSigmoidJitAutoFn.apply(x)
 
 
 class HardSigmoidMe(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(HardSigmoidMe, self).__init__()
 
     def forward(self, x):
         return HardSigmoidJitAutoFn.apply(x)
 
 
-@torch.jit.script
+#@torch.jit.script
 def hard_swish_jit_fwd(x):
     return x * (x + 3).clamp(min=0, max=6).div(6.)
 
 
-@torch.jit.script
+#@torch.jit.script
 def hard_swish_jit_bwd(x, grad_output):
     m = torch.ones_like(x) * (x >= 3.)
     m = torch.where((x >= -3.) & (x <= 3.),  x / 3. + .5, m)
@@ -168,19 +168,19 @@ def hard_swish_me(x, inplace=False):
 
 
 class HardSwishMe(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(HardSwishMe, self).__init__()
 
     def forward(self, x):
         return HardSwishJitAutoFn.apply(x)
 
 
-@torch.jit.script
+#@torch.jit.script
 def hard_mish_jit_fwd(x):
     return 0.5 * x * (x + 2).clamp(min=0, max=2)
 
 
-@torch.jit.script
+#@torch.jit.script
 def hard_mish_jit_bwd(x, grad_output):
     m = torch.ones_like(x) * (x >= -2.)
     m = torch.where((x >= -2.) & (x <= 0.), x + 1., m)
@@ -203,12 +203,12 @@ class HardMishJitAutoFn(torch.autograd.Function):
         return hard_mish_jit_bwd(x, grad_output)
 
 
-def hard_mish_me(x, inplace: bool = False):
+def hard_mish_me(x, inplace = False):
     return HardMishJitAutoFn.apply(x)
 
 
 class HardMishMe(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(HardMishMe, self).__init__()
 
     def forward(self, x):

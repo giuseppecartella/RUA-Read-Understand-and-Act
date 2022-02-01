@@ -19,6 +19,6 @@ class LayerNorm2d(nn.LayerNorm):
     def __init__(self, num_channels):
         super().__init__(num_channels)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         return F.layer_norm(
             x.permute(0, 2, 3, 1), self.normalized_shape, self.weight, self.bias, self.eps).permute(0, 3, 1, 2)

@@ -15,22 +15,20 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 
-@torch.jit.script
-def swish_jit(x, inplace: bool = False):
-    """Swish - Described in: https://arxiv.org/abs/1710.05941
-    """
+#@torch.jit.script
+def swish_jit(x, inplace = False):
     return x.mul(x.sigmoid())
 
 
-@torch.jit.script
-def mish_jit(x, _inplace: bool = False):
+#@torch.jit.script
+def mish_jit(x, _inplace = False):
     """Mish: A Self Regularized Non-Monotonic Neural Activation Function - https://arxiv.org/abs/1908.08681
     """
     return x.mul(F.softplus(x).tanh())
 
 
 class SwishJit(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(SwishJit, self).__init__()
 
     def forward(self, x):
@@ -38,43 +36,43 @@ class SwishJit(nn.Module):
 
 
 class MishJit(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(MishJit, self).__init__()
 
     def forward(self, x):
         return mish_jit(x)
 
 
-@torch.jit.script
-def hard_sigmoid_jit(x, inplace: bool = False):
+#@torch.jit.script
+def hard_sigmoid_jit(x, inplace = False):
     # return F.relu6(x + 3.) / 6.
     return (x + 3).clamp(min=0, max=6).div(6.)  # clamp seems ever so slightly faster?
 
 
 class HardSigmoidJit(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(HardSigmoidJit, self).__init__()
 
     def forward(self, x):
         return hard_sigmoid_jit(x)
 
 
-@torch.jit.script
-def hard_swish_jit(x, inplace: bool = False):
+#@torch.jit.script
+def hard_swish_jit(x, inplace = False):
     # return x * (F.relu6(x + 3.) / 6)
     return x * (x + 3).clamp(min=0, max=6).div(6.)  # clamp seems ever so slightly faster?
 
 
 class HardSwishJit(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(HardSwishJit, self).__init__()
 
     def forward(self, x):
         return hard_swish_jit(x)
 
 
-@torch.jit.script
-def hard_mish_jit(x, inplace: bool = False):
+#@torch.jit.script
+def hard_mish_jit(x, inplace = False):
     """ Hard Mish
     Experimental, based on notes by Mish author Diganta Misra at
       https://github.com/digantamisra98/H-Mish/blob/0da20d4bc58e696b6803f2523c58d3c8a82782d0/README.md
@@ -83,7 +81,7 @@ def hard_mish_jit(x, inplace: bool = False):
 
 
 class HardMishJit(nn.Module):
-    def __init__(self, inplace: bool = False):
+    def __init__(self, inplace = False):
         super(HardMishJit, self).__init__()
 
     def forward(self, x):

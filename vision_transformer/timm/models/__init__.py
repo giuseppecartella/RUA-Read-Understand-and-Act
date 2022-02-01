@@ -1,4 +1,5 @@
-from .beit import *
+# -*- coding: utf-8 -*-
+'''from .beit import *
 from .byoanet import *
 from .byobnet import *
 from .cait import *
@@ -31,7 +32,10 @@ from .pnasnet import *
 from .regnet import *
 from .res2net import *
 from .resnest import *
+'''
 from .resnet import *
+
+'''
 from .resnetv2 import *
 from .rexnet import *
 from .selecsls import *
@@ -48,7 +52,7 @@ from .vision_transformer_hybrid import *
 from .vovnet import *
 from .xception import *
 from .xception_aligned import *
-from .xcit import *
+from .xcit import *'''
 
 from .factory import create_model, split_model_name, safe_model_name
 from .helpers import load_checkpoint, resume_checkpoint, model_parameters

@@ -25,7 +25,7 @@ from .weight_init import trunc_normal_
 from .trace_utils import _assert
 
 
-def rel_logits_1d(q, rel_k, permute_mask: List[int]):
+def rel_logits_1d(q, rel_k, permute_mask):
     """ Compute relative logits along one dimension
 
     As per: https://gist.github.com/aravindsrinivas/56359b79f0ce4449bcb04ab4b56a57a2
@@ -37,7 +37,7 @@ def rel_logits_1d(q, rel_k, permute_mask: List[int]):
         permute_mask: permute output dim according to this
     """
     B, H, W, dim = q.shape
-    x = (q @ rel_k.transpose(-1, -2))
+    x = (torch.matmul(q,rel_k.transpose(-1,-2)))
     x = x.reshape(-1, W, 2 * W -1)
 
     # pad to shift from relative to absolute indexing
@@ -147,11 +147,11 @@ class BottleneckAttn(nn.Module):
         v = v.reshape(B * self.num_heads, self.dim_head_v, -1).transpose(-1, -2)
 
         if self.scale_pos_embed:
-            attn = (q @ k + self.pos_embed(q)) * self.scale  # B * num_heads, H * W, H * W
+            attn = torch.matmul(q, k + self.pos_embed(q)) * self.scale  # B * num_heads, H * W, H * W
         else:
-            attn = (q @ k) * self.scale + self.pos_embed(q)
+            attn = (torch.matmul(q,k)) * self.scale + self.pos_embed(q)
         attn = attn.softmax(dim=-1)
 
-        out = (attn @ v).transpose(-1, -2).reshape(B, self.dim_out_v, H, W)  # B, dim_out, H, W
+        out = (torch.matmul(attn,v)).transpose(-1, -2).reshape(B, self.dim_out_v, H, W)  # B, dim_out, H, W
         out = self.pool(out)
         return out

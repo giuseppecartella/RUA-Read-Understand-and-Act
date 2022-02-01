@@ -11,7 +11,7 @@ import tarfile
 from .parser import Parser
 from .class_map import load_class_map
 from .constants import IMG_EXTENSIONS
-from timm.utils.misc import natural_key
+from vision_transformer.timm.utils.misc import natural_key
 
 
 def extract_tarinfo(tarfile, class_to_idx=None, sort=True):

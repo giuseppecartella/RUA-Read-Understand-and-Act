@@ -108,6 +108,26 @@ class GeometryTransformation():
         return pts_in_cam
 
 
+    #forse questa funzione è da eliminare
+    """
+    def coordinate_projection(self, starting_pose, current_pose):
+            delta_x = starting_pose[0]
+            delta_y = starting_pose[1]
+            yaw = starting_pose[-1]
+            rot_matrix = np.array(
+                [
+                    [np.cos(yaw), -np.sin(yaw), delta_x],
+                    [np.sin(yaw), np.cos(yaw), delta_y],
+                    [0, 0, 1]
+                ])
+            
+            agent_state = np.expand_dims([current_pose[0], current_pose[1], 1], axis=0).T
+            agent_state = np.matmul(np.linalg.inv(rot_matrix), agent_state)
+            agent_state[-1] = current_pose[-1] - yaw
+
+            return agent_state.reshape((1, 3))
+    """
+
     def rotate_point(self, delta_x, delta_y, yaw):
         rot_matrix = np.array([[np.cos(yaw), -np.sin(yaw), 0],
                                [np.sin(yaw),  np.cos(yaw), 0],
@@ -118,6 +138,13 @@ class GeometryTransformation():
         rotated_point[1] = -rotated_point[1] #swap y coordinate
 
         return rotated_point
+
+    def rotation_for_global_coords(self, yaw, original_point):
+        rotation_matrix = np.array([[np.cos(yaw), -np.sin(yaw), 0],
+                            [np.sin(yaw),  np.cos(yaw), 0],
+                            [          0,            0, 1]])
+                
+        return np.matmul(rotation_matrix, original_point.T)
 
     def translate_point(self, dx, dy, original_point):
         translation_matrix = np.array([[1, 0, dx],
@@ -138,11 +165,11 @@ class GeometryTransformation():
         current_yaw = robot_state[-1]
         yaw = current_yaw
 
-        rotated_point = self.rotate_point(delta_x, delta_y, yaw)
-        translated_point = self.translate_point(x,y,rotated_point)
+        rotated_point = self.rotation_for_global_coords(yaw, np.array([delta_x, delta_y, 1]))
+        global_coords = robot_state + rotated_point
     
-        print(delta_x, delta_y, x, y, yaw, rotated_point)
-        print('Translated point: {}'.format(translated_point))
-        return translated_point
+        '''print(delta_x, delta_y, x, y, yaw, rotated_point)
+        print('Global coords: {}'.format(global_coords))'''
+        return global_coords
 
     

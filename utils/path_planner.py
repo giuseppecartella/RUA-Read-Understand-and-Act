@@ -78,8 +78,6 @@ class PathPlanner():
         
         while len(open_list) > 0  :
             if (time.time() - start_time) > 0.5:
-
-                print((time.time() - start_time))
                 return self.return_path(current_node)
             
             outer_iterations += 1

@@ -3,13 +3,14 @@
 Hacked together by / Copyright 2020 Ross Wightman
 """
 from itertools import repeat
-import collections.abc
+#import collections.abc
+from collections import Iterable
 
 
 # From PyTorch internals
 def _ntuple(n):
     def parse(x):
-        if isinstance(x, collections.abc.Iterable):
+        if isinstance(x, Iterable):
             return x
         return tuple(repeat(x, n))
     return parse

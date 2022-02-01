@@ -82,7 +82,7 @@ class BilinearAttnTransform(nn.Module):
         self.groups = groups
         self.in_channels = in_channels
 
-    def resize_mat(self, x, t: int):
+    def resize_mat(self, x, t):
         B, C, block_size, block_size1 = x.shape
         _assert(block_size == block_size1, '')
         if t <= 1:

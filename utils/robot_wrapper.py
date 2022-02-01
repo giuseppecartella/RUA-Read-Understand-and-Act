@@ -5,7 +5,7 @@ from utils.movement_helper import Movement_helper
 from .geometry_transformation import GeometryTransformation
 import matplotlib.pyplot as plt
 from utils.plotter import Plotter
-import copy
+import time
 from . import project_parameters as params
 import random
 
@@ -22,22 +22,32 @@ class RobotWrapper():
     def explore(self, signal_detector, map_constructor, img_processing, gt, path_planner, signal_abs_coords=None, last=None):  
         # TUTTI PARAM IN GRASSETTO DA METTERE POI IN PARAMS QUANDO ABBIAMO DECISO 
         plotter = Plotter('results')   
-
-        if signal_abs_coords is not None:
+        '''if signal_abs_coords is not None:
             print('conosco dove si trova segnale, mi ruoto')
             angle_movement = self.allineate_robot(signal_abs_coords)
-            self.turn(angle_movement)
+            self.turn(angle_movement)'''
        
         for i in range(params.MAX_ROTATIONS):
             print('{} Rotation ...'.format(i))
             rgb_img, d_img = self.get_rgbd_frame()
+
+            print("Looking for written signal...")
+            found_written_sign, prediction = signal_detector.look_for_written_signal(rgb_img, d_img, self)
+            print("found written signal :", found_written_sign)
+            if found_written_sign:
+                step_forward = self.get_values_for_action(prediction)
+                print("Found written signal!!")
+                return None,None,None,None, step_forward
+
+            print("Not found written signal. Looking for ")
             found, x_c, y_c = signal_detector.look_for_signal(rgb_img)
+
+            plt.imsave('results/rgb_image.png', rgb_img)
+            plt.imsave('results/depth_image.png', d_img, cmap='gray')
 
             if found:
                 print('SEGNALE TROVATO')
-                plt.imsave('results/rgb.jpg', d_img)
-                plt.imsave('results/depth.png', d_img, cmap='gray')
-                return rgb_img, d_img, x_c , y_c
+                return rgb_img, d_img, x_c , y_c, False
             else:
                 self.turn(params.ANGLES_RADIANT)
                 print("segnale NON trovato")
@@ -53,14 +63,21 @@ class RobotWrapper():
                     self.turn(angle_movement)
                 
                 self.reset_camera()
-                rgb_img, d_img = self.get_rgbd_frame()              
+                rgb_img, d_img = self.get_rgbd_frame()    
+
+                found_written_sign, prediction = signal_detector.look_for_written_signal(rgb_img, d_img, self)
+                if found_written_sign:
+                    step_forward = self.get_values_for_action(prediction)
+                    return None,None,None,None, step_forward       
+
                 found, x_c, y_c = signal_detector.look_for_signal(rgb_img)
                 
+
+                plt.imsave('results/rgb_image.jpg', d_img)
+                plt.imsave('results/depth_image.png', d_img, cmap='gray')
                 if found:
                     print("Trovato segnale durante exploration. Ritorno in avoid_obstacles!")
-                    plt.imsave('results/rgb.jpg', d_img)
-                    plt.imsave('results/depth.png', d_img, cmap='gray')
-                    return rgb_img, d_img, x_c , y_c
+                    return rgb_img, d_img, x_c , y_c, False
                 else:
                     print("Sto esplorando andando dritto!")
                     # start exploring
@@ -70,7 +87,7 @@ class RobotWrapper():
 
                     MAX_STEP_EXPLORATION = 120
                     # signal False means we do not use the signal coords for the planimetry
-                    planimetry, robot_coords = map_constructor.construct_planimetry(matrix_3d_points, signal = False)
+                    planimetry, robot_coords , _= map_constructor.construct_planimetry(matrix_3d_points, signal_3d_point=None, signal = False)
                     planimetry = img_processing.process_planimetry(planimetry)
                     
                     start = robot_coords
@@ -89,7 +106,7 @@ class RobotWrapper():
                     else:
                         self.turn(random.uniform(-1.57, 1.57))
         
-        return None, None, None, None
+        return None, None, None, None, None
                     
        
     def get_rgbd_frame(self):
@@ -148,8 +165,20 @@ class RobotWrapper():
     
     def follow_trajectory(self, path, robot_coords):
         movement_helper = Movement_helper()
-        #print("Path: ", path)
         states = movement_helper.follow_trajectory(self.robot, path, robot_coords)
-        #print("States: ", states)
         self.robot.base.track_trajectory(states, close_loop=True, wait=True)
-        #print("FINITO LA TRACK!")
+        print("FINITA LA TRACK!")
+
+    def get_values_for_action(self, prediction):
+        # indipendentemente dalla predizione alla fine io voglio andare avanti di un metro
+        if prediction == 2:
+            
+            self.turn(1.57) #90 degrees
+        elif prediction == 3:
+            
+            self.turn(-1.57)
+        elif prediction == 4:
+            
+            #potremmo mettere una sleep di qualche secondo per simulare che il robot sta fermo
+            time.sleep(5)
+            print('stop terminato!!!')

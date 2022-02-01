@@ -27,15 +27,15 @@ def is_no_jit():
 
 
 class set_no_jit:
-    def __init__(self, mode: bool) -> None:
+    def __init__(self, mode):
         global _NO_JIT
         self.prev = _NO_JIT
         _NO_JIT = mode
 
-    def __enter__(self) -> None:
+    def __enter__(self):
         pass
 
-    def __exit__(self, *args: Any) -> bool:
+    def __exit__(self, *args):
         global _NO_JIT
         _NO_JIT = self.prev
         return False
@@ -46,15 +46,15 @@ def is_exportable():
 
 
 class set_exportable:
-    def __init__(self, mode: bool) -> None:
+    def __init__(self, mode):
         global _EXPORTABLE
         self.prev = _EXPORTABLE
         _EXPORTABLE = mode
 
-    def __enter__(self) -> None:
+    def __enter__(self) :
         pass
 
-    def __exit__(self, *args: Any) -> bool:
+    def __exit__(self, *args):
         global _EXPORTABLE
         _EXPORTABLE = self.prev
         return False
@@ -65,15 +65,15 @@ def is_scriptable():
 
 
 class set_scriptable:
-    def __init__(self, mode: bool) -> None:
+    def __init__(self, mode) :
         global _SCRIPTABLE
         self.prev = _SCRIPTABLE
         _SCRIPTABLE = mode
 
-    def __enter__(self) -> None:
+    def __enter__(self) :
         pass
 
-    def __exit__(self, *args: Any) -> bool:
+    def __exit__(self, *args):
         global _SCRIPTABLE
         _SCRIPTABLE = self.prev
         return False
@@ -85,10 +85,10 @@ class set_layer_config:
     """
     def __init__(
             self,
-            scriptable: Optional[bool] = None,
-            exportable: Optional[bool] = None,
-            no_jit: Optional[bool] = None,
-            no_activation_jit: Optional[bool] = None):
+            scriptable = None,
+            exportable = None,
+            no_jit = None,
+            no_activation_jit = None):
         global _SCRIPTABLE
         global _EXPORTABLE
         global _NO_JIT
@@ -103,10 +103,10 @@ class set_layer_config:
         if no_activation_jit is not None:
             _NO_ACTIVATION_JIT = no_activation_jit
 
-    def __enter__(self) -> None:
+    def __enter__(self):
         pass
 
-    def __exit__(self, *args: Any) -> bool:
+    def __exit__(self, *args):
         global _SCRIPTABLE
         global _EXPORTABLE
         global _NO_JIT

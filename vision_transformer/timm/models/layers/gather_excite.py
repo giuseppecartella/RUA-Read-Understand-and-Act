@@ -40,18 +40,18 @@ class GatherExcite(nn.Module):
                 self.gather.add_module(
                     'conv1', create_conv2d(channels, channels, kernel_size=feat_size, stride=1, depthwise=True))
                 if norm_layer:
-                    self.gather.add_module(f'norm1', nn.BatchNorm2d(channels))
+                    self.gather.add_module('norm1', nn.BatchNorm2d(channels))
             else:
                 assert extent % 2 == 0
                 num_conv = int(math.log2(extent))
                 for i in range(num_conv):
                     self.gather.add_module(
-                        f'conv{i + 1}',
+                        'conv{}'.format(i+1),
                         create_conv2d(channels, channels, kernel_size=3, stride=2, depthwise=True))
                     if norm_layer:
-                        self.gather.add_module(f'norm{i + 1}', nn.BatchNorm2d(channels))
+                        self.gather.add_module('norm{}'.format(i+1), nn.BatchNorm2d(channels))
                     if i != num_conv - 1:
-                        self.gather.add_module(f'act{i + 1}', act_layer(inplace=True))
+                        self.gather.add_module('act{}'.format(i+1), act_layer(inplace=True))
         else:
             self.gather = None
             if self.extent == 0:

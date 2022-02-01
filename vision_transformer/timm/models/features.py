@@ -19,7 +19,7 @@ import torch.nn as nn
 
 class FeatureInfo:
 
-    def __init__(self, feature_info: List[Dict], out_indices: Tuple[int]):
+    def __init__(self, feature_info, out_indices):
         prev_reduction = 1
         for fi in feature_info:
             # sanity check the mandatory fields, there may be additional fields depending on the model
@@ -30,7 +30,7 @@ class FeatureInfo:
         self.out_indices = out_indices
         self.info = feature_info
 
-    def from_other(self, out_indices: Tuple[int]):
+    def from_other(self, out_indices):
         return FeatureInfo(deepcopy(self.info), out_indices)
 
     def get(self, key, idx=None):
@@ -112,7 +112,7 @@ class FeatureHooks:
             x = x[0]  # unwrap input tuple
         self._feature_outputs[x.device][hook_id] = x
 
-    def get_output(self, device) -> Dict[str, torch.tensor]:
+    def get_output(self, device):
         output = self._feature_outputs[device]
         self._feature_outputs[device] = OrderedDict()  # clear after reading
         return output
@@ -194,10 +194,10 @@ class FeatureDictNet(nn.ModuleDict):
             if not remaining:
                 break
         assert not remaining and len(self.return_layers) == len(return_layers), \
-            f'Return layers ({remaining}) are not present in model'
+            'Return layers ({}) are not present in model'.format(remaining)
         self.update(layers)
 
-    def _collect(self, x) -> (Dict[str, torch.Tensor]):
+    def _collect(self, x):
         out = OrderedDict()
         for name, module in self.items():
             x = module(x)
@@ -211,7 +211,7 @@ class FeatureDictNet(nn.ModuleDict):
                     out[out_id] = x
         return out
 
-    def forward(self, x) -> Dict[str, torch.Tensor]:
+    def forward(self, x):
         return self._collect(x)
 
 
@@ -228,7 +228,7 @@ class FeatureListNet(FeatureDictNet):
             model, out_indices=out_indices, out_map=out_map, feature_concat=feature_concat,
             flatten_sequential=flatten_sequential)
 
-    def forward(self, x) -> (List[torch.Tensor]):
+    def forward(self, x):
         return list(self._collect(x).values())
 
 
@@ -273,7 +273,7 @@ class FeatureHookNet(nn.ModuleDict):
                         del remaining[fn]
                 if not remaining:
                     break
-            assert not remaining, f'Return layers ({remaining}) are not present in model'
+            assert not remaining, 'Return layers ({}) are not present in model'.format(remaining)
         self.update(layers)
         self.hooks = FeatureHooks(hooks, model.named_modules(), out_map=out_map)
 

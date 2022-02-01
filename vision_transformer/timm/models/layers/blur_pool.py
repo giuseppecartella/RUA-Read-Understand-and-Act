@@ -26,7 +26,7 @@ class BlurPool2d(nn.Module):
     Returns:
         torch.Tensor: the transformed tensor.
     """
-    def __init__(self, channels, filt_size=3, stride=2) -> None:
+    def __init__(self, channels, filt_size=3, stride=2):
         super(BlurPool2d, self).__init__()
         assert filt_size > 1
         self.channels = channels
@@ -37,6 +37,6 @@ class BlurPool2d(nn.Module):
         blur_filter = (coeffs[:, None] * coeffs[None, :])[None, None, :, :].repeat(self.channels, 1, 1, 1)
         self.register_buffer('filt', blur_filter, persistent=False)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         x = F.pad(x, self.padding, 'reflect')
         return F.conv2d(x, self.filt, stride=self.stride, groups=x.shape[1])

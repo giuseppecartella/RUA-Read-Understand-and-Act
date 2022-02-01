@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-
 from pyrobot import Robot
 from utils.geometry_transformation import GeometryTransformation
 from pyrobot.locobot.base_control_utils import (
@@ -68,7 +67,7 @@ class Movement_helper():
                 concatenate_state = self.get_trajectory(bot, destination, i, concatenate_state)
                 last_concatenate_state = concatenate_state[-1].copy()
 
-                print('X: {}, Y:{}, THETA:{}'.format(x,y,theta))
+                #print('X: {}, Y:{}, THETA:{}'.format(x,y,theta))
                 previous_point = trajectory[i]
             
             return concatenate_state
@@ -83,11 +82,7 @@ class Movement_helper():
         if dest[0] == 0.0:
             return concatenate_state
 
-        #print("Iteration: ", i)
-
-        print(concatenate_state[-1])
         val = concatenate_state[-1].copy()
-        #print("Val: ", val)
 
         if i == 0:
             if abs(dest[1]) < 0.05:

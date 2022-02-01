@@ -16,7 +16,7 @@ class PatchEmbed(nn.Module):
     """ 2D Image to Patch Embedding
     """
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, norm_layer=None, flatten=True):
-        super().__init__()
+        super(PatchEmbed,self).__init__()
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         self.img_size = img_size
@@ -30,8 +30,8 @@ class PatchEmbed(nn.Module):
 
     def forward(self, x):
         B, C, H, W = x.shape
-        _assert(H == self.img_size[0], f"Input image height ({H}) doesn't match model ({self.img_size[0]}).")
-        _assert(W == self.img_size[1], f"Input image width ({W}) doesn't match model ({self.img_size[1]}).")
+        _assert(H == self.img_size[0], "Input image height ({}) doesn't match model ({}).".format(H,self.img_size[0]))
+        _assert(W == self.img_size[1], "Input image width ({}) doesn't match model ({}).".format(W,self.img_size[1]))
         x = self.proj(x)
         if self.flatten:
             x = x.flatten(2).transpose(1, 2)  # BCHW -> BNC

@@ -82,7 +82,7 @@ def variance_scaling_(tensor, scale=1.0, mode='fan_in', distribution='normal'):
         bound = math.sqrt(3 * variance)
         tensor.uniform_(-bound, bound)
     else:
-        raise ValueError(f"invalid distribution {distribution}")
+        raise ValueError("invalid distribution {}".format(distribution))
 
 
 def lecun_normal_(tensor):

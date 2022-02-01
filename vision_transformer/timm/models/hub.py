@@ -12,7 +12,8 @@ try:
 except ImportError:
     from torch.hub import _get_torch_home as get_dir
 
-from timm import __version__
+#from timm import __version__
+__version__ = '0.0.5'
 try:
     from huggingface_hub import HfApi, HfFolder, Repository, cached_download, hf_hub_url
     cached_download = partial(cached_download, library_name="timm", library_version=__version__)
@@ -69,19 +70,19 @@ def hf_split(hf_id):
     return hf_model_id, hf_revision
 
 
-def load_cfg_from_json(json_file: Union[str, os.PathLike]):
+def load_cfg_from_json(json_file):
     with open(json_file, "r", encoding="utf-8") as reader:
         text = reader.read()
     return json.loads(text)
 
 
-def _download_from_hf(model_id: str, filename: str):
+def _download_from_hf(model_id, filename):
     hf_model_id, hf_revision = hf_split(model_id)
     url = hf_hub_url(hf_model_id, filename, revision=hf_revision)
     return cached_download(url, cache_dir=get_cache_dir('hf'))
 
 
-def load_model_config_from_hf(model_id: str):
+def load_model_config_from_hf(model_id):
     assert has_hf_hub(True)
     cached_file = _download_from_hf(model_id, 'config.json')
     default_cfg = load_cfg_from_json(cached_file)
@@ -90,7 +91,7 @@ def load_model_config_from_hf(model_id: str):
     return default_cfg, model_name
 
 
-def load_state_dict_from_hf(model_id: str):
+def load_state_dict_from_hf(model_id):
     assert has_hf_hub(True)
     cached_file = _download_from_hf(model_id, 'pytorch_model.bin')
     state_dict = torch.load(cached_file, map_location='cpu')
@@ -110,7 +111,7 @@ def save_for_hf(model, save_directory, model_config=None):
     hf_config = model.default_cfg
     hf_config['num_classes'] = model_config.pop('num_classes', model.num_classes)
     hf_config['num_features'] = model_config.pop('num_features', model.num_features)
-    hf_config['labels'] = model_config.pop('labels', [f"LABEL_{i}" for i in range(hf_config['num_classes'])])
+    hf_config['labels'] = model_config.pop('labels', ["LABEL_{}".format(i) for i in range(hf_config['num_classes'])])
     hf_config.update(model_config)
 
     with config_path.open('w') as f:
@@ -146,7 +147,7 @@ def push_to_hf_hub(
         repo_owner = HfApi().whoami(token)['name']
         repo_name = Path(local_dir).name
 
-    repo_url = f'https://huggingface.co/{repo_owner}/{repo_name}'
+    repo_url = 'https://huggingface.co/{}/{}'.format(repo_owner, repo_name)
 
     repo = Repository(
         local_dir,
@@ -158,7 +159,7 @@ def push_to_hf_hub(
     )
 
     # Prepare a default model card that includes the necessary tags to enable inference.
-    readme_text = f'---\ntags:\n- image-classification\n- timm\nlibrary_tag: timm\n---\n# Model card for {repo_name}'
+    readme_text = '---\ntags:\n- image-classification\n- timm\nlibrary_tag: timm\n---\n# Model card for {}'.format(repo_name)
     with repo.commit(commit_message):
         # Save model weights and config.
         save_for_hf(model, repo.local_dir, model_config=model_config)

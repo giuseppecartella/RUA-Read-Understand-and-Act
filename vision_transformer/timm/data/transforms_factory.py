@@ -8,10 +8,10 @@ import math
 import torch
 from torchvision import transforms
 
-from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, DEFAULT_CROP_PCT
-from timm.data.auto_augment import rand_augment_transform, augment_and_mix_transform, auto_augment_transform
-from timm.data.transforms import str_to_interp_mode, str_to_pil_interp, RandomResizedCropAndInterpolation, ToNumpy
-from timm.data.random_erasing import RandomErasing
+from vision_transformer.timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, DEFAULT_CROP_PCT
+from vision_transformer.timm.data.auto_augment import rand_augment_transform, augment_and_mix_transform, auto_augment_transform
+from vision_transformer.timm.data.transforms import str_to_interp_mode, str_to_pil_interp, RandomResizedCropAndInterpolation, ToNumpy
+from vision_transformer.timm.data.random_erasing import RandomErasing
 
 
 def transforms_noaug_train(

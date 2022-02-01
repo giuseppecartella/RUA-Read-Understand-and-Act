@@ -20,8 +20,8 @@ import torch.nn.functional as F
 
 
 def drop_block_2d(
-        x, drop_prob: float = 0.1, block_size: int = 7,  gamma_scale: float = 1.0,
-        with_noise: bool = False, inplace: bool = False, batchwise: bool = False):
+        x, drop_prob = 0.1, block_size = 7,  gamma_scale = 1.0,
+        with_noise = False, inplace = False, batchwise = False):
     """ DropBlock. See https://arxiv.org/pdf/1810.12890.pdf
 
     DropBlock with an experimental gaussian noise option. This layer has been tested on a few training
@@ -68,8 +68,8 @@ def drop_block_2d(
 
 
 def drop_block_fast_2d(
-        x: torch.Tensor, drop_prob: float = 0.1, block_size: int = 7,
-        gamma_scale: float = 1.0, with_noise: bool = False, inplace: bool = False):
+        x, drop_prob = 0.1, block_size = 7,
+        gamma_scale = 1.0, with_noise = False, inplace = False):
     """ DropBlock. See https://arxiv.org/pdf/1810.12890.pdf
 
     DropBlock with an experimental gaussian noise option. Simplied from above without concern for valid
@@ -132,7 +132,7 @@ class DropBlock2d(nn.Module):
                 x, self.drop_prob, self.block_size, self.gamma_scale, self.with_noise, self.inplace, self.batchwise)
 
 
-def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: bool = True):
+def drop_path(x, drop_prob = 0., training = False, scale_by_keep = True):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
 
     This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,

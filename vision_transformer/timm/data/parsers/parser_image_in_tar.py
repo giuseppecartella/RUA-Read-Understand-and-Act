@@ -17,7 +17,7 @@ import numpy as np
 from glob import glob
 from typing import List, Dict
 
-from timm.utils.misc import natural_key
+from vision_transformer.timm.utils.misc import natural_key
 
 from .parser import Parser
 from .class_map import load_class_map

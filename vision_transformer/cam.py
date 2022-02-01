@@ -1,39 +1,41 @@
+# -*- coding: utf-8 -*-
 import torch
 import numpy as np
 import cv2
-import timm
+import vision_transformer
+from .ViT import VisionTransformer
+from .vit_our import ViT
 from PIL import Image
+from vision_transformer import timm
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-import os
-from ViT import ViT
+
 
 class Cam():
     def __init__(self):
         #load model
         self.CLS2IDX = {0: 'No_signal', 1: 'go_ahead', 2: 'Left', 3: 'right', 4: 'stop' }
-        #root = 'vision_transformer'
-        #model_path = os.path.join(root, 'model.pt')
-        model_path = 'model.pt'
-        print(model_path)
+        model_path_cnn = 'vision_transformer/model_cnn.pt'
+        model_path_vit = 'vision_transformer/model_new.pt'
 
-        self.model = timm.create_model('vit_tiny_patch16_224')
-        checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.model.eval()
+        self.model_cnn = timm.create_model('resnet18', num_classes=5)
+        self.model_vit = VisionTransformer(embed_dim=192, num_heads=3, num_classes=5)
+     
+        checkpoint_cnn = torch.load(model_path_cnn, map_location=torch.device('cpu'))
+        checkpoint_vit = torch.load(model_path_vit, map_location=torch.device('cpu'))
+        self.model_cnn.load_state_dict(checkpoint_cnn['model_state_dict'])
+        self.model_cnn.eval()
+
+        self.model_vit.load_state_dict(checkpoint_vit['model_state_dict'])
+        self.model_vit.eval()
 
 
     def apply_transformations(self, image):
-        #normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
-            #transforms.CenterCrop(224),
             transforms.ToTensor(),
-            #normalize,
         ])
         
-        transformed_img = transform(image)
-        print(transformed_img.shape)
         return transform(image)
 
     # create heatmap from mask on image
@@ -45,7 +47,7 @@ class Cam():
         return cam
     
     def generate_visualization(self, original_image, class_index=None):
-        transformer_attribution = self.generate_relevance(original_image.unsqueeze(0), index=class_index).detach()
+        transformer_attribution, prediction = self.generate_relevance(original_image.unsqueeze(0), index=class_index)
         transformer_attribution = transformer_attribution.reshape(1, 1, 14, 14)
         transformer_attribution = torch.nn.functional.interpolate(transformer_attribution, scale_factor=16, mode='bilinear')
         transformer_attribution = transformer_attribution.reshape(224, 224).data.cpu().numpy()
@@ -55,8 +57,8 @@ class Cam():
         vis = self.show_cam_on_image(image_transformer_attribution, transformer_attribution)
         vis =  np.uint8(255 * vis)
         vis = cv2.cvtColor(np.array(vis), cv2.COLOR_RGB2BGR)
-        return vis
-    
+        return vis, prediction
+
     def print_top_classes(self, predictions, **kwargs):    
         # Print Top-5 predictions
         prob = torch.softmax(predictions, dim=1)
@@ -89,7 +91,12 @@ class Cam():
         return R_ss_addition
 
     def generate_relevance(self, input, index=None):
-        output = self.model(input)
+        output_cnn = self.model_cnn(input)
+        output = self.model_vit(input)
+
+        print("Output cnn: ", torch.argmax(output_cnn))
+        print("Output vit: ", torch.argmax(output))
+
         if index == None:
             index = np.argmax(output.cpu().data.numpy(), axis=-1)
 
@@ -97,56 +104,15 @@ class Cam():
         one_hot[0, index] = 1
         one_hot = torch.from_numpy(one_hot).requires_grad_(True)
         one_hot = torch.sum(one_hot* output)
-        self.model.zero_grad()
+        self.model_vit.zero_grad()
         one_hot.backward(retain_graph=True)
 
-        num_tokens = self.model.blocks[0].attn.get_attention_map().shape[-1]
+        num_tokens = self.model_vit.blocks[0].attn.get_attention_map().shape[-1]
         R = torch.eye(num_tokens, num_tokens)
-        for blk in self.model.blocks:
+        for blk in self.model_vit.blocks:
             grad = blk.attn.get_attn_gradients()
             cam = blk.attn.get_attention_map()
             cam = self.avg_heads(cam, grad)
             R += self.apply_self_attention_rules(R, cam)
 
-        return R[0, 1:]
-    
-    def predict(self, image):
-        output = self.model.forward(image.unsqueeze(0))
-        return output
-
-cam = Cam()
-image = Image.open('./9990.jpg')
-transformed_image = cam.apply_transformations(image)
-
-fig, axs = plt.subplots(1, 2)
-axs[0].imshow(image)
-axs[0].axis('off')
-
-output = cam.predict(transformed_image)
-cam.print_top_classes(output)
-
-# cat - the predicted class
-image_1 = cam.generate_visualization(transformed_image)
-image_1 = cv2.resize(image_1, (640,480))
-image_1 = cv2.cvtColor(image_1, cv2.COLOR_BGR2RGB)
-print(image_1.shape)
-image_1 = image_1[:,:,2]
-print(image_1.shape)
-
-mask = np.where(image_1>230, 255,0)
-print(mask.shape)
-mask = np.where(mask==255)
-row_median = np.median(mask[0])
-col_median = np.median(mask[1])
-print(int(row_median), int(col_median))
-
-
-#print(image_1.min() ,image_1.max())
-#no we should get the pixel coordinates and project back in the original image. 
-
-axs[1].imshow(image_1);
-axs[1].axis('off');
-plt.show()
-
-plt.imshow(mask)
-plt.show()
+        return R[0, 1:], output_cnn

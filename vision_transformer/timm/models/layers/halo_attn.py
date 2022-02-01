@@ -27,7 +27,7 @@ from .weight_init import trunc_normal_
 from .trace_utils import _assert
 
 
-def rel_logits_1d(q, rel_k, permute_mask: List[int]):
+def rel_logits_1d(q, rel_k, permute_mask):
     """ Compute relative logits along one dimension
 
     As per: https://gist.github.com/aravindsrinivas/56359b79f0ce4449bcb04ab4b56a57a2
@@ -42,7 +42,7 @@ def rel_logits_1d(q, rel_k, permute_mask: List[int]):
     rel_size = rel_k.shape[0]
     win_size = (rel_size + 1) // 2
 
-    x = (q @ rel_k.transpose(-1, -2))
+    x = (torch.matmul(q, rel_k.transpose(-1, -2)))
     x = x.reshape(-1, W, rel_size)
 
     # pad to shift from relative to absolute indexing
@@ -194,13 +194,13 @@ class HaloAttn(nn.Module):
         # B * num_heads, num_blocks, win_size ** 2, dim_head_qk or dim_head_v
 
         if self.scale_pos_embed:
-            attn = (q @ k.transpose(-1, -2) + self.pos_embed(q)) * self.scale
+            attn = (torch.matmul(q, k.transpose(-1, -2) + self.pos_embed(q))) * self.scale
         else:
-            attn = (q @ k.transpose(-1, -2)) * self.scale + self.pos_embed(q)
+            attn = (torch.matmul(q, k.transpose(-1, -2))) * self.scale + self.pos_embed(q)
         # B * num_heads, num_blocks, block_size ** 2, win_size ** 2
         attn = attn.softmax(dim=-1)
 
-        out = (attn @ v).transpose(1, 3)  # B * num_heads, dim_head_v, block_size ** 2, num_blocks
+        out = (torch.matmul(attn, v)).transpose(1, 3)  # B * num_heads, dim_head_v, block_size ** 2, num_blocks
         # fold
         out = out.reshape(-1, self.block_size_ds, self.block_size_ds, num_h_blocks, num_w_blocks)
         out = out.permute(0, 3, 1, 4, 2).contiguous().view(

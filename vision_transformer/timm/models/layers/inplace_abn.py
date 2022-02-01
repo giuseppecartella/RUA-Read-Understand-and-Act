@@ -57,7 +57,7 @@ class InplaceAbn(nn.Module):
                 elif act_layer == nn.Identity:
                     self.act_name = 'identity'
                 else:
-                    assert False, f'Invalid act layer {act_layer.__name__} for IABN'
+                    assert False, 'Invalid act layer {} for IABN'.format(act_layer.__name__)
         else:
             self.act_name = 'identity'
         self.act_param = act_param

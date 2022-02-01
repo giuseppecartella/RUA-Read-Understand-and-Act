@@ -185,10 +185,10 @@ def load_pretrained(model, default_cfg=None, num_classes=1000, in_chans=3, filte
         _logger.warning("No pretrained weights exist for this model. Using random initialization.")
         return
     if pretrained_url:
-        _logger.info(f'Loading pretrained weights from url ({pretrained_url})')
+        _logger.info('Loading pretrained weights from url ({})'.format(pretrained_url))
         state_dict = load_state_dict_from_url(pretrained_url, progress=progress, map_location='cpu')
     elif hf_hub_id and has_hf_hub(necessary=True):
-        _logger.info(f'Loading pretrained weights from Hugging Face hub ({hf_hub_id})')
+        _logger.info('Loading pretrained weights from Hugging Face hub ({})'.format(hf_hub_id))
         state_dict = load_state_dict_from_hf(hf_hub_id)
     if filter_fn is not None:
         # for backwards compat with filter fn that take one arg, try one first, the two
@@ -206,12 +206,12 @@ def load_pretrained(model, default_cfg=None, num_classes=1000, in_chans=3, filte
             try:
                 state_dict[weight_name] = adapt_input_conv(in_chans, state_dict[weight_name])
                 _logger.info(
-                    f'Converted input conv {input_conv_name} pretrained weights from 3 to {in_chans} channel(s)')
+                    'Converted input conv {} pretrained weights from 3 to {} channel(s)'.format(input_conv_name, in_chans))
             except NotImplementedError as e:
                 del state_dict[weight_name]
                 strict = False
                 _logger.warning(
-                    f'Unable to convert pretrained {input_conv_name} weights, using random init for this layer.')
+                    'Unable to convert pretrained {} weights, using random init for this layer.'.format(input_conv_name))
 
     classifiers = default_cfg.get('classifier', None)
     label_offset = default_cfg.get('label_offset', 0)
@@ -403,16 +403,16 @@ def update_default_cfg_and_kwargs(default_cfg, kwargs, kwargs_filter):
 
 
 def build_model_with_cfg(
-        model_cls: Callable,
-        variant: str,
-        pretrained: bool,
-        default_cfg: dict,
-        model_cfg: Optional[Any] = None,
-        feature_cfg: Optional[dict] = None,
-        pretrained_strict: bool = True,
-        pretrained_filter_fn: Optional[Callable] = None,
-        pretrained_custom_load: bool = False,
-        kwargs_filter: Optional[Tuple[str]] = None,
+        model_cls,
+        variant,
+        pretrained,
+        default_cfg,
+        model_cfg = None,
+        feature_cfg = None,
+        pretrained_strict = True,
+        pretrained_filter_fn = None,
+        pretrained_custom_load = False,
+        kwargs_filter = None,
         **kwargs):
     """ Build model with specified default_cfg and optional model_cfg
 
@@ -481,7 +481,7 @@ def build_model_with_cfg(
                 elif feature_cls == 'fx':
                     feature_cls = FeatureGraphNet
                 else:
-                    assert False, f'Unknown feature class {feature_cls}'
+                    assert False, 'Unknown feature class {}'.format(feature_cls)
         model = feature_cls(model, **feature_cfg)
         model.default_cfg = default_cfg_for_features(default_cfg)  # add back default_cfg
     
@@ -496,7 +496,7 @@ def model_parameters(model, exclude_head=False):
         return model.parameters()
 
 
-def named_apply(fn: Callable, module: nn.Module, name='', depth_first=True, include_root=False) -> nn.Module:
+def named_apply(fn, module, name='', depth_first=True, include_root=False):
     if not depth_first and include_root:
         fn(module=module, name=name)
     for child_name, child_module in module.named_children():
@@ -506,8 +506,8 @@ def named_apply(fn: Callable, module: nn.Module, name='', depth_first=True, incl
         fn(module=module, name=name)
     return module
 
-
-def named_modules(module: nn.Module, name='', depth_first=True, include_root=False):
+'''
+def named_modules(module, name='', depth_first=True, include_root=False):
     if not depth_first and include_root:
         yield name, module
     for child_name, child_module in module.named_children():
@@ -516,3 +516,4 @@ def named_modules(module: nn.Module, name='', depth_first=True, include_root=Fal
             module=child_module, name=child_name, depth_first=depth_first, include_root=True)
     if depth_first and include_root:
         yield name, module
+'''

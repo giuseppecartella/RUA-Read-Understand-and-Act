@@ -45,7 +45,7 @@ class MapConstructor():
 
         return planimetry
 
-    def construct_planimetry(self, matrix_3d_points, signal_3d_point = None, signal = True):
+    def construct_planimetry(self, matrix_3d_points, signal_3d_point = None, signal = False):
         y_left = np.max(matrix_3d_points[:,:,1]) #max because y is positive to left
         y_right = np.min(matrix_3d_points[:,:,1])
         y_range = np.abs(y_left - y_right)
@@ -69,18 +69,18 @@ class MapConstructor():
         y_coords = middle_position - obstacles[:,1]
         
         planimetry = np.zeros((max_depth, y_range))
-        planimetry[x_coords, y_coords] = 255
+        planimetry[x_coords, y_coords - 1] = 255
         planimetry = np.where(planimetry < 0, 0, planimetry) #We put 0 for values which can become negative
 
         robot_coords = [0, middle_position]
         
-
         if signal:
             signal_coords = [signal_depth, middle_position - signal_3d_point[1]]
             planimetry, robot_coords, signal_coords = self._clip_planimetry(planimetry, robot_coords, signal_coords)
+            print('construct planimetry coords: ', signal_coords)
             return planimetry, robot_coords, signal_coords
         else:
-            return planimetry, robot_coords
+            return planimetry, robot_coords, None
             
     def _clip_planimetry(self, planimetry, robot_coords, signal_coords):
         old_y_difference=  robot_coords[1] - signal_coords[1]

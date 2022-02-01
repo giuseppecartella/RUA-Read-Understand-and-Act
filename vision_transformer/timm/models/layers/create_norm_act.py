@@ -72,7 +72,7 @@ def convert_norm_act(norm_layer, act_layer):
         elif type_name.startswith('groupnorm'):
             norm_act_layer = GroupNormAct
         else:
-            assert False, f"No equivalent norm_act layer for {type_name}"
+            assert False, "No equivalent norm_act layer for {}".format(type_name)
 
     if norm_act_layer in _NORM_ACT_REQUIRES_ARG:
         # pass `act_layer` through for backwards compat where `act_layer=None` implies no activation.

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ BEIT: BERT Pre-Training of Image Transformers (https://arxiv.org/abs/2106.08254)
 
 Model from official source: https://github.com/microsoft/unilm/tree/master/beit
