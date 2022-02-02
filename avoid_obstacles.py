@@ -62,13 +62,10 @@ def main():
 
         d_img = img_processing.inpaint_depth_img(d_img)
 
-        print("sto per predire")
+    
         found_written_sign, prediction = signal_detector.look_for_written_signal(rgb_img, d_img, robot_wrapper)
 
-        import sys
-        sys.exit()
         if found_written_sign:
-            print('ho trovato un segnale predetto!!')
             step_forward = robot_wrapper.get_values_for_action(prediction)
             signal_3d_point = None
             signal = False
@@ -77,7 +74,6 @@ def main():
             found, x_c, y_c = signal_detector.look_for_signal(rgb_img) #y_c is the row idx, x_c is col_idx
             
             if not found and signal_abs_coords is not None:
-                print('conosco dove si trova segnale, mi ruoto')
                 angle_movement = robot_wrapper.allineate_robot(signal_abs_coords)
                 robot_wrapper.turn(angle_movement)
                 continue
@@ -88,7 +84,6 @@ def main():
 
             
             if not found:
-                print('Signal not found. STARTING EXPLORATION.')
                 rgb_img, d_img, x_c , y_c, step_forward  = robot_wrapper.explore(signal_detector, map_constructor, img_processing, gt, path_planner, signal_abs_coords)
                 if step_forward is not None:
                     step_forward = robot_wrapper.get_values_for_action(prediction)
@@ -96,7 +91,6 @@ def main():
                     signal = False
                 else:
                     if x_c is None:
-                        print('Signal not found. Last Rotation. ')
                         rgb_img, d_img, x_c , y_c, step_forward = robot_wrapper.explore(signal_detector, map_constructor, img_processing, gt, path_planner, signal_abs_coords, last=True)
                         if step_forward is not None:
                             step_forward = robot_wrapper.get_values_for_action(prediction)
@@ -104,19 +98,13 @@ def main():
                             signal = False
                             
                         if x_c is None:
-                            print('Signal not found. END!')
                             return -1
-            else:
-                print('Signal found!')     
-            
-                #forse anche questa si puo eliminare se mettiamo il continue.
-                #d_img = img_processing.inpaint_depth_img(d_img)
+            else:  
 
                 #--------------------------------------------------------------------------#
 
                 #------------------------GEOMETRIC TRANSFORMATIONS-------------------------#           
 
-            
                 signal_3d_point = gt.get_single_3d_point(d_img, y_c, x_c)
 
                 x_signal = signal_3d_point[0]
@@ -125,28 +113,23 @@ def main():
                 signal_distance = round(signal_distance, 2)
                 if signal_abs_coords is None:
                     if lab_mode == "True":
-                        print('signal found. updating global signal coordinates')
                         signal_abs_coords = gt.update_signal_abs_coords(signal_3d_point, robot_wrapper)
 
-                print("Signal distance: ", (signal_distance / 100))
+              
                 if signal_distance /  100 <= 0.50:
                     if signal_abs_coords is not None:
-                        print('conosco dove si trova segnale, mi ruoto')
                         angle_movement = robot_wrapper.allineate_robot(signal_abs_coords)
                         robot_wrapper.turn(angle_movement)
                     break
         
-        #rgb_img, d_img = robot_wrapper.get_rgbd_frame()
-        #d_img = img_processing.inpaint_depth_img(d_img)
+
         matrix_3d_points = gt.get_all_3d_points(d_img)
         #--------------------------------------------------------------------------#
 
         #--------------------------MAP CONSTRUCTION--------------------------------#
         #For Locobot Y is positive to left.
         planimetry, robot_coords, signal_coords = map_constructor.construct_planimetry(matrix_3d_points, signal_3d_point, signal = signal)
-        print('Robot_Coords: ', robot_coords)
         if debug == "True":
-            #plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'raw_planimetry')
             copy_planimetry = copy.deepcopy(planimetry)
             plt.imsave('results/raw_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
 
@@ -156,7 +139,7 @@ def main():
         if debug == "True":
             plotter.save_image(rgb_img, 'rgb_image', False)
             plotter.save_image(d_img, 'depth_image', True)
-            #plotter.save_planimetry(planimetry, robot_coords, signal_coords, 'processed_planimetry')
+
             copy_planimetry = copy.deepcopy(planimetry)
             plt.imsave('results/processed_planimetry.png', copy_planimetry, cmap='gray', origin='lower')
 
@@ -176,12 +159,12 @@ def main():
         
         if path is not None:
             if debug == "True":
-                #plotter.save_planimetry(planimetry, start_point, end_point_signal, 'planimetry_with_trajectory', coords=path)
-                pass
-            #path = path_planner.shrink_path(path)
+                plotter.save_planimetry(planimetry, start_point, end_point_signal, 'planimetry_with_trajectory', coords=path)
+                
+            path = path_planner.shrink_path(path)
             path = [(0, 46), (53, 55), (56, 63), (59, 70), (62, 74), (65, 77), (69, 79), (78, 83), (84, 84), (93, 85), (103, 85), (145, 85)]
-            #if len(path) >= 2:
-                #path = path_planner.clean_shrink_path(path, end_point_path)
+            if len(path) >= 2:
+                path = path_planner.clean_shrink_path(path, end_point_path)
    
             if debug == "True":
                 plotter.save_planimetry(planimetry, start_point, end_point_signal, 'planimetry_with_shrinked_path', coords=path)
@@ -197,15 +180,14 @@ def main():
                 robot_pose = robot_wrapper.get_robot_position()
                 distance = np.sqrt( (robot_pose[0] - signal_abs_coords[0]) ** 2 + (robot_pose[1] - signal_abs_coords[1]) ** 2)
                 distance = round(distance, 2)
-                print("Distance finale: ", distance)
+
                 if distance <= 0.50:
                     if signal_abs_coords is not None:
-                        print('conosco dove si trova segnale, mi ruoto')
+
                         angle_movement = robot_wrapper.allineate_robot(signal_abs_coords)
                         robot_wrapper.turn(angle_movement)
                     break
         else:
-            print("Path is None! ")
             break
 
     

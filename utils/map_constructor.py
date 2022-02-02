@@ -8,35 +8,6 @@ class MapConstructor():
     def __init__(self):
         pass
 
-
-    """ VERSIONE VECCHIA E FUNZIONANTE
-    def construct_planimetry(self, matrix_3d_points, signal_3d_point):
-        y_left = np.max(matrix_3d_points[:,:,1]) #max because y is positive to left
-        y_right = np.min(matrix_3d_points[:,:,1])
-        y_range = np.abs(y_left - y_right)
-        middle_position = int(np.round(y_range / 2))
-
-        signal_depth = signal_3d_point[0]
-        coordinates_X = matrix_3d_points[:,:,0]
-        coordinates_Z = matrix_3d_points[:,:,2]
-
-        mask = np.logical_and(coordinates_Z > (params.FLOOR_HEIGHT_LIMIT * 100), coordinates_Z < (params.ROBOT_HEIGHT * 100))
-        mask = np.logical_and(mask, coordinates_X < signal_depth)
-
-        obstacles = matrix_3d_points[mask==True]
-        x_coords = obstacles[:,0]
-        y_coords = middle_position - obstacles[:,1]
-
-        planimetry = np.zeros((signal_depth, y_range))
-        planimetry[x_coords, y_coords] = 255
-        planimetry = np.where(planimetry < 0, 0, planimetry) #We put 0 for values which can become negative
-
-        robot_coords = [0, middle_position]
-        signal_coords = [signal_depth, middle_position - signal_3d_point[1]]
-
-        planimetry, robot_coords, signal_coords = self._clip_planimetry(planimetry, robot_coords, signal_coords)
-        return planimetry, robot_coords, signal_coords
-    """
     def circle_around_signal(self, planimetry, xc , yc, radius):
         for r in range(planimetry.shape[0]):
             for c in range(planimetry.shape[1]):
@@ -77,7 +48,6 @@ class MapConstructor():
         if signal:
             signal_coords = [signal_depth, middle_position - signal_3d_point[1]]
             planimetry, robot_coords, signal_coords = self._clip_planimetry(planimetry, robot_coords, signal_coords)
-            print('construct planimetry coords: ', signal_coords)
             return planimetry, robot_coords, signal_coords
         else:
             return planimetry, robot_coords, None

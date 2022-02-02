@@ -108,26 +108,6 @@ class GeometryTransformation():
         return pts_in_cam
 
 
-    #forse questa funzione è da eliminare
-    """
-    def coordinate_projection(self, starting_pose, current_pose):
-            delta_x = starting_pose[0]
-            delta_y = starting_pose[1]
-            yaw = starting_pose[-1]
-            rot_matrix = np.array(
-                [
-                    [np.cos(yaw), -np.sin(yaw), delta_x],
-                    [np.sin(yaw), np.cos(yaw), delta_y],
-                    [0, 0, 1]
-                ])
-            
-            agent_state = np.expand_dims([current_pose[0], current_pose[1], 1], axis=0).T
-            agent_state = np.matmul(np.linalg.inv(rot_matrix), agent_state)
-            agent_state[-1] = current_pose[-1] - yaw
-
-            return agent_state.reshape((1, 3))
-    """
-
     def rotate_point(self, delta_x, delta_y, yaw):
         rot_matrix = np.array([[np.cos(yaw), -np.sin(yaw), 0],
                                [np.sin(yaw),  np.cos(yaw), 0],
@@ -168,8 +148,6 @@ class GeometryTransformation():
         rotated_point = self.rotation_for_global_coords(yaw, np.array([delta_x, delta_y, 1]))
         global_coords = robot_state + rotated_point
     
-        '''print(delta_x, delta_y, x, y, yaw, rotated_point)
-        print('Global coords: {}'.format(global_coords))'''
         return global_coords
 
     

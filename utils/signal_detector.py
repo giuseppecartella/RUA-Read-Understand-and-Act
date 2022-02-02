@@ -69,17 +69,12 @@ class SignalDetector():
         
         plt.imsave('results/heatmap.png', heatmap)
         plt.imsave(f'vision_transformer/cam_visualization/cam_{np.random.randint(1000)}.png', heatmap)
-        #print("prediction is: ", prediction)
         if prediction != 0:
             distance_written_sign = self.get_written_signal_distance(heatmap, d_img)
-            print("distance is: ", distance_written_sign)
-            
+    
             if distance_written_sign <= 10:
                 return True, prediction
-        
-        # torna false se non c'è segnale o se è troppo lontano
-        #print("sono troppo lontano o non c'è il segnale")
-        
+
         return False, prediction
 
 
@@ -93,7 +88,6 @@ class SignalDetector():
         height = rgb_img.shape[0]
         heatmap = cv2.resize(heatmap, (width, height))
         prediction = torch.argmax(prediction)
-        print("Prediction is: ", prediction)
         return prediction.item(), heatmap
 
     def get_signal_distance(self, x_c, y_c, depth_image):

@@ -67,7 +67,7 @@ class Movement_helper():
                 concatenate_state = self.get_trajectory(bot, destination, i, concatenate_state)
                 last_concatenate_state = concatenate_state[-1].copy()
 
-                #print('X: {}, Y:{}, THETA:{}'.format(x,y,theta))
+               
                 previous_point = trajectory[i]
             
             return concatenate_state
@@ -89,24 +89,21 @@ class Movement_helper():
                 concatenate_state, _ = self.get_trajectory_straight(val, dt, r, v, dest[0])
             else:
                 state = self.do_rotation(dest, val, dt, r, v)
-                #print("state after rotation: ", state)
-
+    
                 diagonal = np.sqrt( dest[0] ** 2 + dest[1] ** 2 )
                 state1, _ = self.get_trajectory_straight(state[-1].copy(), dt, r, v, diagonal)
-                #print("state after straight: ", state1)
+           
                 concatenate_state = np.concatenate([state, state1], 0)
         else:
             if abs(dest[1]) < 0.05:
                 state, _ = self.get_trajectory_straight(val, dt, r, v, dest[0])
             else:
                 state = self.do_rotation(dest, val, dt, r, v)
-                #print("state after rotation: ", state)
 
                 concatenate_state = np.concatenate([concatenate_state, state], 0)
 
                 diagonal = np.sqrt( dest[0] ** 2 + dest[1] ** 2 )
                 state, _ = self.get_trajectory_straight(concatenate_state[-1].copy(), dt, r, v, diagonal)
-                #print("state after straight: ", state)
 
             concatenate_state = np.concatenate([concatenate_state, state], 0)
 

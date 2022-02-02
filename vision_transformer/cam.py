@@ -3,8 +3,8 @@ import torch
 import numpy as np
 import cv2
 import vision_transformer
-from .ViT import VisionTransformer
-from .vit_our import ViT
+from .ViT_timm import VisionTransformer
+from .ViT import ViT
 from PIL import Image
 from vision_transformer import timm
 import torchvision.transforms as transforms
@@ -93,9 +93,6 @@ class Cam():
     def generate_relevance(self, input, index=None):
         output_cnn = self.model_cnn(input)
         output = self.model_vit(input)
-
-        print("Output cnn: ", torch.argmax(output_cnn))
-        print("Output vit: ", torch.argmax(output))
 
         if index == None:
             index = np.argmax(output.cpu().data.numpy(), axis=-1)

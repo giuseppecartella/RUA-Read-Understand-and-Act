@@ -22,35 +22,28 @@ class RobotWrapper():
     def explore(self, signal_detector, map_constructor, img_processing, gt, path_planner, signal_abs_coords=None, last=None):  
         # TUTTI PARAM IN GRASSETTO DA METTERE POI IN PARAMS QUANDO ABBIAMO DECISO 
         plotter = Plotter('results')   
-        '''if signal_abs_coords is not None:
-            print('conosco dove si trova segnale, mi ruoto')
-            angle_movement = self.allineate_robot(signal_abs_coords)
-            self.turn(angle_movement)'''
+
        
         for i in range(params.MAX_ROTATIONS):
             print('{} Rotation ...'.format(i))
             rgb_img, d_img = self.get_rgbd_frame()
 
-            print("Looking for written signal...")
+         
             found_written_sign, prediction = signal_detector.look_for_written_signal(rgb_img, d_img, self)
-            print("found written signal :", found_written_sign)
             if found_written_sign:
                 step_forward = self.get_values_for_action(prediction)
-                print("Found written signal!!")
                 return None,None,None,None, step_forward
 
-            print("Not found written signal. Looking for ")
+       
             found, x_c, y_c = signal_detector.look_for_signal(rgb_img)
 
             plt.imsave('results/rgb_image.png', rgb_img)
             plt.imsave('results/depth_image.png', d_img, cmap='gray')
 
             if found:
-                print('SEGNALE TROVATO')
                 return rgb_img, d_img, x_c , y_c, False
             else:
                 self.turn(params.ANGLES_RADIANT)
-                print("segnale NON trovato")
         
 
         if last is None:
@@ -58,7 +51,6 @@ class RobotWrapper():
             EXPLORATION_TIMES = 4
             for times in range(EXPLORATION_TIMES):
                 if signal_abs_coords is not None:
-                    print('conosco dove si trova segnale, mi ruoto')
                     angle_movement = self.allineate_robot(signal_abs_coords)
                     self.turn(angle_movement)
                 
@@ -76,10 +68,8 @@ class RobotWrapper():
                 plt.imsave('results/rgb_image.jpg', d_img)
                 plt.imsave('results/depth_image.png', d_img, cmap='gray')
                 if found:
-                    print("Trovato segnale durante exploration. Ritorno in avoid_obstacles!")
                     return rgb_img, d_img, x_c , y_c, False
                 else:
-                    print("Sto esplorando andando dritto!")
                     # start exploring
                     print('{} Exploration ...'.format(times))
                     d_img = img_processing.inpaint_depth_img(d_img)
@@ -121,31 +111,23 @@ class RobotWrapper():
 
     
     def allineate_robot(self, signal_abs_coords):
-        #print('Sto calcolando angolo per riallinearmi al robot')
-        #print('Signal abs coords: {}'.format(signal_abs_coords))
         current_pose = self.get_robot_position()
-        #print('Current_pose: {}'.format(current_pose))
+
         delta_x = signal_abs_coords[0] - current_pose[0]
         delta_y = signal_abs_coords[1] - current_pose[1]
 
-        #print('deltax: {}, deltay: {}'.format(delta_x, delta_y))
         alpha = np.arctan2(delta_y, delta_x)
         yaw = current_pose[-1]
-        #print('Yaw corrente robot: {}'.format(yaw))
-        #print('alpha: {}'.format(alpha))
 
         #consider alpha and yaw always positive
         alpha = alpha if alpha >=0 else (2*np.pi + alpha)
         yaw = yaw if yaw >= 0 else (2*np.pi + yaw)
-        #print('Dopo che trasformo: alpha: {}, yaw:{}'.format(alpha, yaw))
 
-        #print('Angolo calcolato: {}'.format(alpha - yaw))
         return alpha - yaw
 
 
     def reach_relative_point(self, x, y, theta=0.0):
         target_position = [x, y, theta]
-        #print('Target position: {}'.format(target_position))
         self.robot.base.go_to_relative(target_position, smooth=False, close_loop=True)
 
     def reach_absolute_point(self, x, y, theta=0.0):
@@ -170,15 +152,9 @@ class RobotWrapper():
         print("FINITA LA TRACK!")
 
     def get_values_for_action(self, prediction):
-        # indipendentemente dalla predizione alla fine io voglio andare avanti di un metro
         if prediction == 2:
-            
             self.turn(1.57) #90 degrees
         elif prediction == 3:
-            
             self.turn(-1.57)
         elif prediction == 4:
-            
-            #potremmo mettere una sleep di qualche secondo per simulare che il robot sta fermo
             time.sleep(5)
-            print('stop terminato!!!')

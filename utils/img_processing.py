@@ -21,7 +21,6 @@ class ImgProcessing():
     def process_planimetry(self, planimetry, signal_coords = None):
         kernel = np.ones((3,3))
         map_constructor = MapConstructor()
-        # serve per togliere quei puntini bianchi ?? --> da controllare in lab 
         planimetry = cv2.medianBlur(planimetry.astype(np.ubyte), 5)
         radius = 30
 
