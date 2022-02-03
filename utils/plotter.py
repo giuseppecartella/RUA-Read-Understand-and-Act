@@ -36,8 +36,8 @@ class Plotter():
         x_s, y_s = height - signal_coords[0] - 1, signal_coords[1]
         cv2.circle(new_planimetry, (y_r,x_r), 3, color=red, thickness=-1)
         cv2.circle(new_planimetry, (y_s,x_s), 3, color=green, thickness=-1)
-        
-        
+
+ 
         if coords is not None:
             for point in coords:
                 cv2.circle(new_planimetry, (point[1], height - point[0] - 1), 2, color=blue, thickness=-1)

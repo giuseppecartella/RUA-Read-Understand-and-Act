@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from utils import project_parameters as params
 from utils.map_constructor import MapConstructor
+from utils.plotter import Plotter
 
 class ImgProcessing():
     def __init__(self):
@@ -17,17 +18,23 @@ class ImgProcessing():
         result = cv2.medianBlur(result, 5)
         result = cv2.medianBlur(result, 5)
         return result
+        
 
     def process_planimetry(self, planimetry, signal_coords = None):
+        import matplotlib.pyplot as plt
         kernel = np.ones((3,3))
         map_constructor = MapConstructor()
         planimetry = cv2.medianBlur(planimetry.astype(np.ubyte), 5)
+        plt.imsave('results/media_blur.png', planimetry, origin='lower', cmap='gray')
         radius = 30
 
         if signal_coords is not None:
             planimetry = map_constructor.circle_around_signal(planimetry, signal_coords[0], signal_coords[1], radius)
         planimetry = cv2.dilate(planimetry, kernel, iterations=1)
+        plt.imsave('results/after_dilation.png', planimetry, origin='lower', cmap='gray')
         planimetry = cv2.GaussianBlur(planimetry, params.GAUSSIAN_FILTER_SIZE, (params.GAUSSIAN_FILTER_SIZE[0]-1)/5) # filtro 51 sta almeno a 20 cm da ostacoli
+        plt.imsave('results/after gaussian.png', planimetry, origin='lower', cmap='gray')
         planimetry = np.where(planimetry > 1.9, 255, 0)
+        plt.imsave('results/after_binarization.png', planimetry, origin='lower', cmap='gray')
         
         return planimetry

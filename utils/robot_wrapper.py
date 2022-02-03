@@ -20,9 +20,7 @@ class RobotWrapper():
             self.camera = self.robot.camera
 
     def explore(self, signal_detector, map_constructor, img_processing, gt, path_planner, signal_abs_coords=None, last=None):  
-        # TUTTI PARAM IN GRASSETTO DA METTERE POI IN PARAMS QUANDO ABBIAMO DECISO 
         plotter = Plotter('results')   
-
        
         for i in range(params.MAX_ROTATIONS):
             print('{} Rotation ...'.format(i))
@@ -149,11 +147,10 @@ class RobotWrapper():
         movement_helper = Movement_helper()
         states = movement_helper.follow_trajectory(self.robot, path, robot_coords)
         self.robot.base.track_trajectory(states, close_loop=True, wait=True)
-        print("FINITA LA TRACK!")
 
     def get_values_for_action(self, prediction):
         if prediction == 2:
-            self.turn(1.57) #90 degrees
+            self.turn(1.57) #in radiant
         elif prediction == 3:
             self.turn(-1.57)
         elif prediction == 4:

@@ -28,6 +28,7 @@ class PathPlanner():
         shrink_paths.append(paths[-1])
 
         return shrink_paths
+        
     
     def clean_shrink_path(self, path, signal_coords):
         last_point = path[-1]

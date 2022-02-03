@@ -13,7 +13,7 @@ class SignalDetector():
         print('Self lab mode: {}'.format(self.lab_mode))
         self.WINDOW_SIZE = window_size
         self.template = cv2.cvtColor(cv2.imread('utils/template.jpg'), cv2.COLOR_BGR2RGB)
-        self.cam = Cam()
+        #self.cam = Cam()
 
     def _compute_sift_imgs(self, img1, img2):
         if self.lab_mode == "True":
